@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   Trophy, Camera, Users, Mail, MapPin, Clock, Menu, X, Heart,
   Star, Phone, Facebook, Instagram, Edit3, Save, LogOut, Plus,
-  Trash2, FileText,
+  Trash2, FileText, ChevronUp,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -89,6 +89,7 @@ export default function HomePage() {
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [selectedResultSeason, setSelectedResultSeason] = useState("2025");
   const [galleryFilter, setGalleryFilter] = useState("all");
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -100,6 +101,7 @@ export default function HomePage() {
           break;
         }
       }
+      setShowScrollTop(window.scrollY > 600);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -660,6 +662,37 @@ export default function HomePage() {
             <div className="admin-btn-row"><button className="btn-sm primary" onClick={() => setShowPrivacy(false)}>Close</button></div>
           </div>
         </div>
+      )}
+
+      {/* ── SCROLL TO TOP BUTTON ─── */}
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="Scroll to top"
+          style={{
+            position: "fixed",
+            bottom: adminMode ? 80 : 32,
+            right: 32,
+            width: 48,
+            height: 48,
+            borderRadius: "50%",
+            background: colors.orange,
+            color: "#fff",
+            border: "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
+            zIndex: 9998,
+            transition: "transform 0.2s, opacity 0.3s",
+            opacity: 1,
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+        >
+          <ChevronUp size={26} strokeWidth={2.5} />
+        </button>
       )}
     </div>
   );
