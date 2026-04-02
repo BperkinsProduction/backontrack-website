@@ -65,7 +65,7 @@ const DEFAULT_DATA = {
     "Cumberland Valley Athletic Club is committed to protecting your privacy. We collect only the information necessary to communicate about our events. We do not sell or share personal information with third parties. Photos and videos taken at our events may be used for promotional purposes. Please see our photo/media release form for details regarding images of minors.",
 };
 
-const ADMIN_PASSWORD = "BackOnTrack2026";
+const ADMIN_PASSWORD = "BOT2026";
 
 const colors = {
   orange: "#F5A123",
