@@ -223,27 +223,21 @@ export default function HomePage() {
           <div className="hero-track-lines" />
         </div>
         <div className="hero-content">
+          {adminMode && (
+            <button className="hero-edit-home-btn" onClick={() => openEdit("hero", data.hero)}>
+              <Edit3 size={14} /> Edit Home Screen
+            </button>
+          )}
+
           {data.hero.style === "white" ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img src="/logo-stamp.png" alt="Back on Track" className="hero-stamp" />
           ) : (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img src="/logo-icon.png" alt="Back on Track Icon" className="hero-icon" />
-          )}
-
-          {data.hero.style === "white" ? (
-            adminMode && (
-              <div className="admin-edit-overlay" onClick={() => openEdit("hero", data.hero)} style={{ marginTop: "-1rem" }}>
-                <button className="admin-edit-btn"><Edit3 size={14} /></button>
-              </div>
-            )
-          ) : adminMode ? (
-            <div className="admin-edit-overlay" onClick={() => openEdit("hero", data.hero)}>
-              <button className="admin-edit-btn"><Edit3 size={14} /></button>
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-icon.png" alt="Back on Track Icon" className="hero-icon" />
               <h1>BACK ON <span>TRACK</span></h1>
-            </div>
-          ) : (
-            <h1>BACK ON <span>TRACK</span></h1>
+            </>
           )}
 
           <div className="hero-sub">{data.hero.subhead}</div>
