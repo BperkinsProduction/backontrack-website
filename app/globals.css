@@ -207,12 +207,26 @@ h1, h2, h3, h4 {
   display: none;
 }
 
-.hero.hero-white h1 {
-  color: var(--black);
+.hero.hero-white .hero-track-lanes {
+  background: repeating-linear-gradient(
+    0deg,
+    #F5A123 0px,
+    #F5A123 12px,
+    #E8931A 12px,
+    #E8931A 14px
+  );
+  opacity: 0.45;
 }
 
-.hero.hero-white h1 span {
-  color: var(--orange);
+.hero.hero-white .hero-track-lines {
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent 80px,
+    rgba(0,0,0,0.08) 80px,
+    rgba(0,0,0,0.08) 82px
+  );
+  opacity: 0.45;
 }
 
 .hero.hero-white .hero-sub {
@@ -227,7 +241,7 @@ h1, h2, h3, h4 {
   width: 380px;
   max-width: 80vw;
   height: auto;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.12));
 }
 

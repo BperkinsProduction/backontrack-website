@@ -218,12 +218,10 @@ export default function HomePage() {
 
       {/* ── HERO ─── */}
       <section id="home" className={data.hero.style === "white" ? "hero hero-white" : "hero"}>
-        {data.hero.style !== "white" && (
-          <div className="hero-track">
-            <div className="hero-track-lanes" />
-            <div className="hero-track-lines" />
-          </div>
-        )}
+        <div className="hero-track">
+          <div className="hero-track-lanes" />
+          <div className="hero-track-lines" />
+        </div>
         <div className="hero-content">
           {data.hero.style === "white" ? (
             /* eslint-disable-next-line @next/next/no-img-element */
@@ -233,7 +231,13 @@ export default function HomePage() {
             <img src="/logo-icon.png" alt="Back on Track Icon" className="hero-icon" />
           )}
 
-          {adminMode ? (
+          {data.hero.style === "white" ? (
+            adminMode && (
+              <div className="admin-edit-overlay" onClick={() => openEdit("hero", data.hero)} style={{ marginTop: "-1rem" }}>
+                <button className="admin-edit-btn"><Edit3 size={14} /></button>
+              </div>
+            )
+          ) : adminMode ? (
             <div className="admin-edit-overlay" onClick={() => openEdit("hero", data.hero)}>
               <button className="admin-edit-btn"><Edit3 size={14} /></button>
               <h1>BACK ON <span>TRACK</span></h1>
