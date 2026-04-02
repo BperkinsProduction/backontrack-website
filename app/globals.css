@@ -78,31 +78,13 @@ h1, h2, h3, h4 {
 /* ── Hero ─── */
 .hero {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--black) 0%, #2D2D2D 50%, var(--black) 100%);
+  background: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   position: relative;
   overflow: hidden;
-}
-
-.hero::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background:
-    radial-gradient(ellipse at 20% 50%, rgba(245, 161, 35, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(245, 161, 35, 0.05) 0%, transparent 40%);
-  animation: heroGlow 8s ease-in-out infinite alternate;
-}
-
-@keyframes heroGlow {
-  0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(-2%, 2%) scale(1.05); }
 }
 
 .hero-track {
@@ -122,14 +104,14 @@ h1, h2, h3, h4 {
   height: 100%;
   background: repeating-linear-gradient(
     0deg,
-    #D4603A 0px,
-    #D4603A 12px,
-    #C0543A 12px,
-    #C0543A 14px
+    #F5A123 0px,
+    #F5A123 12px,
+    #E8931A 12px,
+    #E8931A 14px
   );
   transform: perspective(800px) rotateX(65deg);
   transform-origin: bottom;
-  opacity: 0.3;
+  opacity: 0.45;
 }
 
 .hero-track-lines {
@@ -142,12 +124,12 @@ h1, h2, h3, h4 {
     90deg,
     transparent 0px,
     transparent 80px,
-    rgba(255,255,255,0.1) 80px,
-    rgba(255,255,255,0.1) 82px
+    rgba(0,0,0,0.08) 80px,
+    rgba(0,0,0,0.08) 82px
   );
   transform: perspective(800px) rotateX(65deg);
   transform-origin: bottom;
-  opacity: 0.3;
+  opacity: 0.45;
 }
 
 .hero-content {
@@ -157,34 +139,10 @@ h1, h2, h3, h4 {
   max-width: 900px;
 }
 
-.hero-icon {
-  width: 160px;
-  height: auto;
-  filter: drop-shadow(0 0 30px rgba(245, 161, 35, 0.4));
-  animation: iconFloat 4s ease-in-out infinite;
-  margin-bottom: 1.5rem;
-}
-
-@keyframes iconFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-.hero h1 {
-  font-size: clamp(3rem, 8vw, 6rem);
-  color: white;
-  letter-spacing: 0.04em;
-  margin-bottom: 0.3rem;
-}
-
-.hero h1 span {
-  color: var(--orange);
-}
-
 .hero-sub {
   font-weight: 700;
   font-size: clamp(0.9rem, 2vw, 1.2rem);
-  color: var(--orange);
+  color: var(--orange-dark);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   margin-bottom: 1.2rem;
@@ -193,48 +151,9 @@ h1, h2, h3, h4 {
 .hero-tagline {
   font-weight: 200;
   font-size: clamp(1rem, 2vw, 1.25rem);
-  color: rgba(255,255,255,0.8);
+  color: var(--med-gray);
   max-width: 600px;
   margin: 0 auto 2rem;
-}
-
-/* ── Hero White Variant ─── */
-.hero.hero-white {
-  background: var(--white);
-}
-
-.hero.hero-white::before {
-  display: none;
-}
-
-.hero.hero-white .hero-track-lanes {
-  background: repeating-linear-gradient(
-    0deg,
-    #F5A123 0px,
-    #F5A123 12px,
-    #E8931A 12px,
-    #E8931A 14px
-  );
-  opacity: 0.45;
-}
-
-.hero.hero-white .hero-track-lines {
-  background: repeating-linear-gradient(
-    90deg,
-    transparent 0px,
-    transparent 80px,
-    rgba(0,0,0,0.08) 80px,
-    rgba(0,0,0,0.08) 82px
-  );
-  opacity: 0.45;
-}
-
-.hero.hero-white .hero-sub {
-  color: var(--orange-dark);
-}
-
-.hero.hero-white .hero-tagline {
-  color: var(--med-gray);
 }
 
 .hero-edit-home-btn {
