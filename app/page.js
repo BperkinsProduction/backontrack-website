@@ -259,10 +259,15 @@ export default function HomePage() {
   };
 
   const addAlbum = () => {
+    let displayDate = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    if (editData.albumDate) {
+      const d = new Date(editData.albumDate + "T12:00:00");
+      displayDate = d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    }
     const newAlbum = {
       id: Date.now().toString(),
       name: editData.albumName || "New Album",
-      date: editData.albumDate || new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+      date: displayDate,
       coverUrl: "",
     };
     setData((prev) => ({
