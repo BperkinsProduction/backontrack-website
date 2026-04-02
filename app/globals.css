@@ -198,6 +198,50 @@ h1, h2, h3, h4 {
   margin: 0 auto 2rem;
 }
 
+/* ── Hero White Variant ─── */
+.hero.hero-white {
+  background: var(--white);
+}
+
+.hero.hero-white::before {
+  display: none;
+}
+
+.hero.hero-white h1 {
+  color: var(--black);
+}
+
+.hero.hero-white h1 span {
+  color: var(--orange);
+}
+
+.hero.hero-white .hero-sub {
+  color: var(--orange-dark);
+}
+
+.hero.hero-white .hero-tagline {
+  color: var(--med-gray);
+}
+
+.hero-stamp {
+  width: 380px;
+  max-width: 80vw;
+  height: auto;
+  margin-bottom: 2rem;
+  filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.12));
+}
+
+.hero-btn-dark {
+  background: var(--black) !important;
+  color: var(--orange) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
+}
+
+.hero-btn-dark:hover {
+  background: #333 !important;
+  box-shadow: 0 6px 30px rgba(0,0,0,0.25) !important;
+}
+
 /* ── Buttons ─── */
 .btn-primary {
   display: inline-block;

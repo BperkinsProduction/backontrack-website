@@ -16,6 +16,7 @@ const DEFAULT_DATA = {
     tagline:
       "Over 20 years of keeping kids and families healthy by engaging the entire community.",
     ctaText: "View Upcoming Meets",
+    style: "dark",
   },
   about: {
     title: "About Back on Track",
@@ -216,14 +217,21 @@ export default function HomePage() {
       </div>
 
       {/* ── HERO ─── */}
-      <section id="home" className="hero">
-        <div className="hero-track">
-          <div className="hero-track-lanes" />
-          <div className="hero-track-lines" />
-        </div>
+      <section id="home" className={data.hero.style === "white" ? "hero hero-white" : "hero"}>
+        {data.hero.style !== "white" && (
+          <div className="hero-track">
+            <div className="hero-track-lanes" />
+            <div className="hero-track-lines" />
+          </div>
+        )}
         <div className="hero-content">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-icon.png" alt="Back on Track Icon" className="hero-icon" />
+          {data.hero.style === "white" ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src="/logo-stamp.png" alt="Back on Track" className="hero-stamp" />
+          ) : (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src="/logo-icon.png" alt="Back on Track Icon" className="hero-icon" />
+          )}
 
           {adminMode ? (
             <div className="admin-edit-overlay" onClick={() => openEdit("hero", data.hero)}>
@@ -236,7 +244,7 @@ export default function HomePage() {
 
           <div className="hero-sub">{data.hero.subhead}</div>
           <p className="hero-tagline">{data.hero.tagline}</p>
-          <a className="btn-primary" href="#schedule" onClick={(e) => { e.preventDefault(); scrollTo("schedule"); }}>
+          <a className={data.hero.style === "white" ? "btn-primary hero-btn-dark" : "btn-primary"} href="#schedule" onClick={(e) => { e.preventDefault(); scrollTo("schedule"); }}>
             {data.hero.ctaText}
           </a>
         </div>
@@ -588,6 +596,25 @@ export default function HomePage() {
             {editModal === "hero" && (
               <>
                 <h3>Edit Hero Section</h3>
+                <div className="admin-field">
+                  <label>Landing Page Style</label>
+                  <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.4rem" }}>
+                    <button
+                      className={`btn-sm ${editData.style === "dark" ? "primary" : "ghost"}`}
+                      onClick={() => setEditData({ ...editData, style: "dark" })}
+                      style={{ flex: 1, padding: "0.75rem", fontSize: "0.85rem" }}
+                    >
+                      Dark (Current)
+                    </button>
+                    <button
+                      className={`btn-sm ${editData.style === "white" ? "primary" : "ghost"}`}
+                      onClick={() => setEditData({ ...editData, style: "white" })}
+                      style={{ flex: 1, padding: "0.75rem", fontSize: "0.85rem" }}
+                    >
+                      White + Logo
+                    </button>
+                  </div>
+                </div>
                 <div className="admin-field"><label>Headline</label><input value={editData.headline || ""} onChange={(e) => setEditData({ ...editData, headline: e.target.value })} /></div>
                 <div className="admin-field"><label>Subheadline</label><input value={editData.subhead || ""} onChange={(e) => setEditData({ ...editData, subhead: e.target.value })} /></div>
                 <div className="admin-field"><label>Tagline</label><textarea value={editData.tagline || ""} onChange={(e) => setEditData({ ...editData, tagline: e.target.value })} /></div>
