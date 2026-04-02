@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   Trophy, Camera, Users, Mail, MapPin, Clock, Menu, X, Heart,
   Star, Phone, Facebook, Instagram, Edit3, Save, LogOut, Plus,
-  Trash2, FileText, ChevronUp,
+  Trash2, FileText, ChevronUp, Upload, ImageIcon,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -46,14 +46,7 @@ const DEFAULT_DATA = {
     { id: 2, name: "Community Sponsor 2", level: "Silver", logoUrl: "", website: "#" },
     { id: 3, name: "Community Sponsor 3", level: "Bronze", logoUrl: "", website: "#" },
   ],
-  gallery: [
-    { id: 1, caption: "Athletes at the starting line", year: "2025", category: "action" },
-    { id: 2, caption: "Long jump competition", year: "2025", category: "action" },
-    { id: 3, caption: "Award ceremony", year: "2025", category: "ceremony" },
-    { id: 4, caption: "Community volunteers", year: "2025", category: "community" },
-    { id: 5, caption: "Young athletes warming up", year: "2025", category: "action" },
-    { id: 6, caption: "Shot put event", year: "2025", category: "action" },
-  ],
+  gallery: [],
   contact: {
     email: "backontrack@cvathletic.org",
     phone: "(301) 555-0100",
@@ -91,6 +84,106 @@ export default function HomePage() {
   const [selectedResultSeason, setSelectedResultSeason] = useState("2025");
   const [galleryFilter, setGalleryFilter] = useState("all");
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [galleryUploading, setGalleryUploading] = useState(false);
+
+  // ─── Cloudinary config ───
+  const CLOUD_NAME = "dmvkf3ms8";
+  const UPLOAD_PRESET = "backontrack_unsigned";
+
+  // Fetch gallery images from Cloudinary on mount
+  useEffect(() => {
+    const fetchGallery = async () => {
+      try {
+        const res = await fetch(
+          `https://res.cloudinary.com/${CLOUD_NAME}/image/list/backontrack-gallery.json`
+        );
+        if (res.ok) {
+          const json = await res.json();
+          const images = json.resources.map((img, i) => ({
+            id: img.public_id,
+            imageUrl: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_fill,w_600,h_400,q_auto,f_auto/${img.public_id}`,
+            fullUrl: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/q_auto,f_auto/${img.public_id}`,
+            caption: img.context?.custom?.caption || "",
+            category: img.context?.custom?.category || "action",
+            year: img.context?.custom?.year || new Date().getFullYear().toString(),
+          }));
+          setData((prev) => ({ ...prev, gallery: images }));
+        }
+      } catch (e) {
+        console.log("Gallery fetch:", e);
+      }
+    };
+    fetchGallery();
+  }, []);
+
+  const openCloudinaryUpload = () => {
+    if (!window.cloudinary) {
+      alert("Upload widget is still loading. Please try again in a moment.");
+      return;
+    }
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: CLOUD_NAME,
+        uploadPreset: UPLOAD_PRESET,
+        folder: "backontrack-gallery",
+        tags: ["backontrack-gallery"],
+        sources: ["local", "camera"],
+        multiple: true,
+        maxFiles: 20,
+        resourceType: "image",
+        clientAllowedFormats: ["jpg", "jpeg", "png", "webp"],
+        maxFileSize: 10000000,
+        styles: {
+          palette: {
+            window: "#1A1A1A",
+            windowBorder: "#F5A123",
+            tabIcon: "#F5A123",
+            menuIcons: "#F5A123",
+            textDark: "#1A1A1A",
+            textLight: "#FFFFFF",
+            link: "#F5A123",
+            action: "#F5A123",
+            inactiveTabIcon: "#888",
+            error: "#FF4444",
+            inProgress: "#F5A123",
+            complete: "#28A745",
+            sourceBg: "#2A2A2A",
+          },
+        },
+      },
+      (error, result) => {
+        if (!error && result && result.event === "success") {
+          const img = result.info;
+          setData((prev) => ({
+            ...prev,
+            gallery: [
+              ...prev.gallery,
+              {
+                id: img.public_id,
+                imageUrl: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_fill,w_600,h_400,q_auto,f_auto/${img.public_id}`,
+                fullUrl: img.secure_url,
+                caption: "",
+                category: "action",
+                year: new Date().getFullYear().toString(),
+              },
+            ],
+          }));
+        }
+        if (result && result.event === "close") {
+          setGalleryUploading(false);
+        }
+      }
+    );
+    setGalleryUploading(true);
+    widget.open();
+  };
+
+  const deleteGalleryImage = async (publicId) => {
+    setData((prev) => ({
+      ...prev,
+      gallery: prev.gallery.filter((g) => g.id !== publicId),
+    }));
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -411,22 +504,48 @@ export default function HomePage() {
         <h2 className="section-title">Gallery</h2>
         <p className="section-desc">Relive the action from past meets. Photos and videos from our community of athletes.</p>
 
-        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
-          {["all", "action", "ceremony", "community"].map((cat) => (
-            <button key={cat} className={`btn-sm ${galleryFilter === cat ? "primary" : "ghost"}`} onClick={() => setGalleryFilter(cat)} style={{ textTransform: "capitalize" }}>
-              {cat}
-            </button>
-          ))}
-        </div>
+        {adminMode && (
+          <button className="gallery-upload-btn" onClick={openCloudinaryUpload}>
+            <Upload size={18} /> Upload Photos
+          </button>
+        )}
 
-        <div className="gallery-grid">
-          {data.gallery.filter((g) => galleryFilter === "all" || g.category === galleryFilter).map((item) => (
-            <div key={item.id} className="gallery-item">
-              <div className="gallery-placeholder"><Camera size={32} /><span>Photo Coming Soon</span></div>
-              <div className="gallery-caption">{item.caption} — {item.year}</div>
-            </div>
-          ))}
-        </div>
+        {data.gallery.length > 0 && (
+          <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+            {["all", ...new Set(data.gallery.map((g) => g.category))].map((cat) => (
+              <button key={cat} className={`btn-sm ${galleryFilter === cat ? "primary" : "ghost"}`} onClick={() => setGalleryFilter(cat)} style={{ textTransform: "capitalize" }}>
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {data.gallery.length === 0 ? (
+          <div className="gallery-empty">
+            <ImageIcon size={48} strokeWidth={1} />
+            <p>Photos coming soon!</p>
+            <p style={{ fontSize: "0.85rem", opacity: 0.6 }}>Check back after our first meet of the season.</p>
+          </div>
+        ) : (
+          <div className="gallery-grid">
+            {data.gallery.filter((g) => galleryFilter === "all" || g.category === galleryFilter).map((item) => (
+              <div key={item.id} className="gallery-item">
+                {item.imageUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={item.imageUrl} alt={item.caption || "Gallery photo"} className="gallery-img" loading="lazy" />
+                ) : (
+                  <div className="gallery-placeholder"><Camera size={32} /><span>Photo Coming Soon</span></div>
+                )}
+                {adminMode && (
+                  <button className="gallery-delete-btn" onClick={() => deleteGalleryImage(item.id)} title="Remove photo">
+                    <Trash2 size={14} />
+                  </button>
+                )}
+                {item.caption && <div className="gallery-caption">{item.caption}</div>}
+              </div>
+            ))}
+          </div>
+        )}
 
         <p style={{ textAlign: "center", color: colors.medGray, marginTop: "2rem", fontWeight: 200, fontSize: "0.9rem" }}>
           Note: Photos of minors are shared only with proper media release forms on file. Contact us for our photo policy.

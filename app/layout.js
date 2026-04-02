@@ -18,6 +18,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <link rel="icon" href="/logo-icon.png" />
+        <script src="https://upload-widget.cloudinary.com/latest/global/all.js" async></script>
       </head>
       <body>{children}</body>
     </html>

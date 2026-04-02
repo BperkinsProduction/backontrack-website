@@ -619,6 +619,17 @@ h1, h2, h3, h4 {
   gap: 0.5rem;
 }
 
+.gallery-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s;
+}
+
+.gallery-item:hover .gallery-img {
+  transform: scale(1.05);
+}
+
 .gallery-caption {
   position: absolute;
   bottom: 0;
@@ -629,6 +640,65 @@ h1, h2, h3, h4 {
   padding: 2rem 1rem 1rem;
   font-size: 0.85rem;
   font-weight: 700;
+}
+
+.gallery-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  margin-bottom: 1.5rem;
+  background: var(--orange);
+  color: var(--black);
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-main);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 12px rgba(245, 161, 35, 0.3);
+}
+
+.gallery-upload-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(245, 161, 35, 0.45);
+}
+
+.gallery-delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 5;
+}
+
+.gallery-item:hover .gallery-delete-btn {
+  opacity: 1;
+}
+
+.gallery-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--med-gray);
+}
+
+.gallery-empty p {
+  margin: 0.5rem 0;
+  font-weight: 300;
+  font-size: 1.1rem;
 }
 
 /* ── Sponsors ─── */
