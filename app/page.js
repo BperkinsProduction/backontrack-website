@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   Trophy, Camera, Users, Mail, MapPin, Clock, Menu, X, Heart,
   Star, Phone, Facebook, Instagram, Edit3, Save, LogOut, Plus,
-  Trash2, FileText, ChevronUp, Upload, ImageIcon,
+  Trash2, FileText, ChevronUp, Upload, ImageIcon, FolderPlus, Calendar,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -46,6 +46,7 @@ const DEFAULT_DATA = {
     { id: 2, name: "Community Sponsor 2", level: "Silver", logoUrl: "", website: "#" },
     { id: 3, name: "Community Sponsor 3", level: "Bronze", logoUrl: "", website: "#" },
   ],
+  albums: [],
   gallery: [],
   contact: {
     email: "backontrack@cvathletic.org",
@@ -90,43 +91,107 @@ export default function HomePage() {
   const CLOUD_NAME = "dmvkf3ms8";
   const UPLOAD_PRESET = "backontrack_unsigned";
 
-  // Fetch gallery images from Cloudinary on mount
+  // Fetch gallery images from Cloudinary for each album on mount
   useEffect(() => {
-    const fetchGallery = async () => {
+    const fetchAlbumPhotos = async (album) => {
+      const tag = `album-${album.id}`;
+      try {
+        const res = await fetch(
+          `https://res.cloudinary.com/${CLOUD_NAME}/image/list/${tag}.json`
+        );
+        if (res.ok) {
+          const json = await res.json();
+          return json.resources.map((img) => ({
+            id: img.public_id,
+            albumId: album.id,
+            imageUrl: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_fill,w_600,h_400,q_auto,f_auto/${img.public_id}`,
+            fullUrl: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/q_auto,f_auto/${img.public_id}`,
+            caption: img.context?.custom?.caption || "",
+          }));
+        }
+      } catch (e) {
+        console.log(`Album ${album.name} fetch:`, e);
+      }
+      return [];
+    };
+
+    const fetchAll = async () => {
+      // Also fetch any untagged gallery images
       try {
         const res = await fetch(
           `https://res.cloudinary.com/${CLOUD_NAME}/image/list/backontrack-gallery.json`
         );
         if (res.ok) {
           const json = await res.json();
-          const images = json.resources.map((img, i) => ({
+          const images = json.resources.map((img) => ({
             id: img.public_id,
+            albumId: "general",
             imageUrl: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_fill,w_600,h_400,q_auto,f_auto/${img.public_id}`,
             fullUrl: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/q_auto,f_auto/${img.public_id}`,
             caption: img.context?.custom?.caption || "",
-            category: img.context?.custom?.category || "action",
-            year: img.context?.custom?.year || new Date().getFullYear().toString(),
           }));
-          setData((prev) => ({ ...prev, gallery: images }));
+          if (images.length > 0) {
+            setData((prev) => ({ ...prev, gallery: [...prev.gallery, ...images] }));
+          }
         }
       } catch (e) {
         console.log("Gallery fetch:", e);
       }
     };
-    fetchGallery();
+    fetchAll();
   }, []);
 
-  const openCloudinaryUpload = () => {
+  // Fetch album photos when albums change
+  useEffect(() => {
+    if (data.albums.length === 0) return;
+    const fetchAlbumPhotos = async () => {
+      for (const album of data.albums) {
+        const tag = `album-${album.id}`;
+        try {
+          const res = await fetch(
+            `https://res.cloudinary.com/${CLOUD_NAME}/image/list/${tag}.json`
+          );
+          if (res.ok) {
+            const json = await res.json();
+            const images = json.resources.map((img) => ({
+              id: img.public_id,
+              albumId: album.id,
+              imageUrl: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_fill,w_600,h_400,q_auto,f_auto/${img.public_id}`,
+              fullUrl: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/q_auto,f_auto/${img.public_id}`,
+              caption: img.context?.custom?.caption || "",
+            }));
+            if (images.length > 0) {
+              setData((prev) => ({
+                ...prev,
+                gallery: [
+                  ...prev.gallery.filter((g) => g.albumId !== album.id),
+                  ...images,
+                ],
+              }));
+            }
+          }
+        } catch (e) {
+          console.log(`Album ${album.name} fetch:`, e);
+        }
+      }
+    };
+    fetchAlbumPhotos();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.albums.length]);
+
+  const openCloudinaryUpload = (albumId) => {
     if (!window.cloudinary) {
       alert("Upload widget is still loading. Please try again in a moment.");
       return;
     }
+    const tag = albumId ? `album-${albumId}` : "backontrack-gallery";
+    const folder = albumId ? `backontrack-gallery/${albumId}` : "backontrack-gallery";
     const widget = window.cloudinary.createUploadWidget(
       {
         cloudName: CLOUD_NAME,
         uploadPreset: UPLOAD_PRESET,
-        folder: "backontrack-gallery",
-        tags: ["backontrack-gallery"],
+        folder: folder,
+        tags: [tag, "backontrack-gallery"],
         sources: ["local", "camera"],
         multiple: true,
         maxFiles: 20,
@@ -154,20 +219,28 @@ export default function HomePage() {
       (error, result) => {
         if (!error && result && result.event === "success") {
           const img = result.info;
+          const newPhoto = {
+            id: img.public_id,
+            albumId: albumId || "general",
+            imageUrl: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_fill,w_600,h_400,q_auto,f_auto/${img.public_id}`,
+            fullUrl: img.secure_url,
+            caption: "",
+          };
           setData((prev) => ({
             ...prev,
-            gallery: [
-              ...prev.gallery,
-              {
-                id: img.public_id,
-                imageUrl: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_fill,w_600,h_400,q_auto,f_auto/${img.public_id}`,
-                fullUrl: img.secure_url,
-                caption: "",
-                category: "action",
-                year: new Date().getFullYear().toString(),
-              },
-            ],
+            gallery: [...prev.gallery, newPhoto],
           }));
+          // If this is the first photo in an album and no cover, set it as cover
+          if (albumId) {
+            setData((prev) => ({
+              ...prev,
+              albums: prev.albums.map((a) =>
+                a.id === albumId && !a.coverUrl
+                  ? { ...a, coverUrl: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_fill,w_800,h_400,q_auto,f_auto/${img.public_id}` }
+                  : a
+              ),
+            }));
+          }
         }
         if (result && result.event === "close") {
           setGalleryUploading(false);
@@ -182,6 +255,29 @@ export default function HomePage() {
     setData((prev) => ({
       ...prev,
       gallery: prev.gallery.filter((g) => g.id !== publicId),
+    }));
+  };
+
+  const addAlbum = () => {
+    const newAlbum = {
+      id: Date.now().toString(),
+      name: editData.albumName || "New Album",
+      date: editData.albumDate || new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+      coverUrl: "",
+    };
+    setData((prev) => ({
+      ...prev,
+      albums: [...prev.albums, newAlbum],
+    }));
+    setEditModal(null);
+    setEditData({});
+  };
+
+  const deleteAlbum = (albumId) => {
+    setData((prev) => ({
+      ...prev,
+      albums: prev.albums.filter((a) => a.id !== albumId),
+      gallery: prev.gallery.filter((g) => g.albumId !== albumId),
     }));
   };
 
@@ -505,46 +601,111 @@ export default function HomePage() {
         <p className="section-desc">Relive the action from past meets. Photos and videos from our community of athletes.</p>
 
         {adminMode && (
-          <button className="gallery-upload-btn" onClick={openCloudinaryUpload}>
-            <Upload size={18} /> Upload Photos
-          </button>
-        )}
-
-        {data.gallery.length > 0 && (
-          <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
-            {["all", ...new Set(data.gallery.map((g) => g.category))].map((cat) => (
-              <button key={cat} className={`btn-sm ${galleryFilter === cat ? "primary" : "ghost"}`} onClick={() => setGalleryFilter(cat)} style={{ textTransform: "capitalize" }}>
-                {cat}
-              </button>
-            ))}
+          <div className="gallery-admin-bar">
+            <button className="gallery-upload-btn" onClick={() => openEdit("album-add")}>
+              <FolderPlus size={18} /> Create Album
+            </button>
           </div>
         )}
 
-        {data.gallery.length === 0 ? (
+        {data.albums.length === 0 && data.gallery.length === 0 ? (
           <div className="gallery-empty">
             <ImageIcon size={48} strokeWidth={1} />
             <p>Photos coming soon!</p>
             <p style={{ fontSize: "0.85rem", opacity: 0.6 }}>Check back after our first meet of the season.</p>
           </div>
         ) : (
-          <div className="gallery-grid">
-            {data.gallery.filter((g) => galleryFilter === "all" || g.category === galleryFilter).map((item) => (
-              <div key={item.id} className="gallery-item">
-                {item.imageUrl ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={item.imageUrl} alt={item.caption || "Gallery photo"} className="gallery-img" loading="lazy" />
-                ) : (
-                  <div className="gallery-placeholder"><Camera size={32} /><span>Photo Coming Soon</span></div>
-                )}
-                {adminMode && (
-                  <button className="gallery-delete-btn" onClick={() => deleteGalleryImage(item.id)} title="Remove photo">
-                    <Trash2 size={14} />
-                  </button>
-                )}
-                {item.caption && <div className="gallery-caption">{item.caption}</div>}
+          <>
+            {/* ── Albums as scrolling sections ── */}
+            {data.albums.map((album) => {
+              const albumPhotos = data.gallery.filter((g) => g.albumId === album.id);
+              return (
+                <div key={album.id} className="album-section">
+                  <div className="album-header">
+                    {album.coverUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={album.coverUrl} alt={album.name} className="album-cover" />
+                    ) : (
+                      <div className="album-cover-placeholder">
+                        <Camera size={32} />
+                      </div>
+                    )}
+                    <div className="album-info">
+                      <h3 className="album-name">{album.name}</h3>
+                      <div className="album-date"><Calendar size={14} /> {album.date}</div>
+                      <div className="album-count">{albumPhotos.length} photo{albumPhotos.length !== 1 ? "s" : ""}</div>
+                    </div>
+                    {adminMode && (
+                      <div className="album-admin-actions">
+                        <button className="gallery-upload-btn" onClick={() => openCloudinaryUpload(album.id)} style={{ fontSize: "0.8rem", padding: "0.5rem 1rem" }}>
+                          <Upload size={14} /> Upload
+                        </button>
+                        <button className="album-delete-btn" onClick={() => deleteAlbum(album.id)} title="Delete album">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {albumPhotos.length === 0 ? (
+                    <div className="album-empty">
+                      <p>No photos yet — {adminMode ? "click Upload to add photos" : "check back soon!"}</p>
+                    </div>
+                  ) : (
+                    <div className="gallery-grid">
+                      {albumPhotos.map((item) => (
+                        <div key={item.id} className="gallery-item">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={item.imageUrl} alt={item.caption || "Gallery photo"} className="gallery-img" loading="lazy" />
+                          {adminMode && (
+                            <button className="gallery-delete-btn" onClick={() => deleteGalleryImage(item.id)} title="Remove photo">
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                          {item.caption && <div className="gallery-caption">{item.caption}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* ── General / untagged photos ── */}
+            {data.gallery.filter((g) => g.albumId === "general").length > 0 && (
+              <div className="album-section">
+                <div className="album-header">
+                  <div className="album-cover-placeholder">
+                    <Camera size={32} />
+                  </div>
+                  <div className="album-info">
+                    <h3 className="album-name">General Photos</h3>
+                    <div className="album-count">{data.gallery.filter((g) => g.albumId === "general").length} photo{data.gallery.filter((g) => g.albumId === "general").length !== 1 ? "s" : ""}</div>
+                  </div>
+                  {adminMode && (
+                    <div className="album-admin-actions">
+                      <button className="gallery-upload-btn" onClick={() => openCloudinaryUpload(null)} style={{ fontSize: "0.8rem", padding: "0.5rem 1rem" }}>
+                        <Upload size={14} /> Upload
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="gallery-grid">
+                  {data.gallery.filter((g) => g.albumId === "general").map((item) => (
+                    <div key={item.id} className="gallery-item">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={item.imageUrl} alt={item.caption || "Gallery photo"} className="gallery-img" loading="lazy" />
+                      {adminMode && (
+                        <button className="gallery-delete-btn" onClick={() => deleteGalleryImage(item.id)} title="Remove photo">
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                      {item.caption && <div className="gallery-caption">{item.caption}</div>}
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
 
         <p style={{ textAlign: "center", color: colors.medGray, marginTop: "2rem", fontWeight: 200, fontSize: "0.9rem" }}>
@@ -787,9 +948,21 @@ export default function HomePage() {
                 <div className="admin-field"><label>Instagram URL</label><input value={editData.instagram || ""} onChange={(e) => setEditData({ ...editData, instagram: e.target.value })} /></div>
               </>
             )}
+            {editModal === "album-add" && (
+              <>
+                <h3>Create New Album</h3>
+                <p style={{ fontSize: "0.85rem", color: colors.medGray, marginBottom: "1rem" }}>Create an album for a specific meet or event to organize your photos.</p>
+                <div className="admin-field"><label>Album Name</label><input placeholder="e.g. Meet #1 — Season Opener" value={editData.albumName || ""} onChange={(e) => setEditData({ ...editData, albumName: e.target.value })} /></div>
+                <div className="admin-field"><label>Date</label><input type="date" value={editData.albumDate || ""} onChange={(e) => setEditData({ ...editData, albumDate: e.target.value })} /></div>
+              </>
+            )}
             <div className="admin-btn-row">
               <button className="btn-sm ghost" onClick={() => setEditModal(null)}>Cancel</button>
-              <button className="btn-sm primary" onClick={saveEdit} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}><Save size={14} /> Save Changes</button>
+              {editModal === "album-add" ? (
+                <button className="btn-sm primary" onClick={addAlbum} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}><FolderPlus size={14} /> Create Album</button>
+              ) : (
+                <button className="btn-sm primary" onClick={saveEdit} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}><Save size={14} /> Save Changes</button>
+              )}
             </div>
           </div>
         </div>
