@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   Trophy, Camera, Users, Mail, MapPin, Clock, Menu, X, Heart,
   Star, Phone, Facebook, Instagram, Edit3, Save, LogOut, Plus,
-  Trash2, FileText, ChevronUp, Upload, ImageIcon, FolderPlus, Calendar,
+  Trash2, FileText, ChevronUp, Upload, ImageIcon, FolderPlus, Calendar, CheckCircle,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -82,6 +82,7 @@ export default function HomePage() {
   const [editModal, setEditModal] = useState(null);
   const [editData, setEditData] = useState({});
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [newsletterSent, setNewsletterSent] = useState(false);
   const [selectedResultSeason, setSelectedResultSeason] = useState("2025");
   const [galleryFilter, setGalleryFilter] = useState("all");
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -714,12 +715,33 @@ export default function HomePage() {
         <p style={{ fontWeight: 400, fontSize: "1rem", maxWidth: 500, margin: "0 auto 1.5rem", opacity: 0.85 }}>
           Get meet schedules, results, and community updates delivered to your inbox.
         </p>
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <div className="newsletter-form" style={{ maxWidth: 450 }}>
-            <input type="email" placeholder="Your email address" style={{ borderColor: "rgba(0,0,0,0.15)" }} />
-            <button className="btn-primary" style={{ background: colors.black, color: "white", boxShadow: "none" }}>Subscribe</button>
+        {newsletterSent ? (
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.5rem", padding: "1rem", background: "rgba(0,0,0,0.1)", borderRadius: 12, maxWidth: 450, margin: "0 auto" }}>
+            <CheckCircle size={22} />
+            <span style={{ fontWeight: 700 }}>You&apos;re signed up! We&apos;ll be in touch.</span>
           </div>
-        </div>
+        ) : (
+          <form
+            action="https://formsubmit.co/backontrackhgr@gmail.com"
+            method="POST"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const form = e.target;
+              fetch(form.action, { method: "POST", body: new FormData(form) })
+                .then(() => setNewsletterSent(true))
+                .catch(() => setNewsletterSent(true));
+            }}
+            style={{ display: "flex", justifyContent: "center" }}
+          >
+            <input type="hidden" name="_subject" value="New Back on Track Newsletter Signup" />
+            <input type="hidden" name="_captcha" value="false" />
+            <input type="hidden" name="_template" value="table" />
+            <div className="newsletter-form" style={{ maxWidth: 450 }}>
+              <input type="email" name="email" placeholder="Your email address" required style={{ borderColor: "rgba(0,0,0,0.15)" }} />
+              <button type="submit" className="btn-primary" style={{ background: colors.black, color: "white", boxShadow: "none" }}>Subscribe</button>
+            </div>
+          </form>
+        )}
       </div>
 
       {/* ── SPONSORS ─── */}
