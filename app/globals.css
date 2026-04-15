@@ -1,5 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,200;0,400;0,700;0,900;1,900&display=swap');
 
+@font-face {
+  font-family: 'Raleway Brand';
+  src: url('/fonts/Raleway-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
@@ -24,8 +32,8 @@ body {
 }
 
 h1, h2, h3, h4 {
-  font-family: 'Raleway', sans-serif;
-  font-weight: 900;
+  font-family: 'Raleway Brand', 'Raleway', sans-serif;
+  font-weight: 700;
   font-style: italic;
   line-height: 1.1;
 }
@@ -938,6 +946,23 @@ h1, h2, h3, h4 {
   font-size: 0.8rem;
   color: rgba(255,255,255,0.5);
 }
+
+.built-by-credit {
+  text-decoration: none;
+  color: rgba(255,255,255,0.35);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  transition: color 0.2s;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.1rem;
+}
+.built-by-credit:hover { color: rgba(255,255,255,0.7); }
+.bp-credit-bp { font-weight: 900; color: rgba(255,255,255,0.6); letter-spacing: -0.02em; }
+.bp-credit-slash { font-weight: 200; color: #EF4444; font-size: 0.85rem; }
+.bp-credit-wd { font-weight: 300; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-left: 0.1rem; }
+.built-by-credit:hover .bp-credit-bp { color: rgba(255,255,255,0.9); }
+.built-by-credit:hover .bp-credit-wd { color: rgba(255,255,255,0.6); }
 
 /* ── Waiver Banner ─── */
 .waiver-banner {

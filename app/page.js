@@ -14,7 +14,7 @@ const DEFAULT_DATA = {
     headline: "BACK ON TRACK",
     subhead: "Pete Wright Memorial Summer All-Comers Track & Field Series",
     tagline:
-      "Over 20 years of keeping kids and families healthy by engaging the entire community.",
+      "Over 25 years of promoting health, fitness and community through the sport of running for kids, families and athletes of all ages.",
     ctaText: "View Upcoming Meets",
     style: "white",
   },
@@ -26,14 +26,14 @@ const DEFAULT_DATA = {
     director: "Laura Salvatore",
     directorTitle: "Meet Director",
     nonprofit:
-      "Cumberland Valley Athletic Club is a registered 501(c)(3) nonprofit organization. All donations are tax-deductible to the extent allowed by law.",
-    ein: "EIN: [To be provided]",
+      "Cumberland Valley Athletic Club (operating under the Road Runners Club of America) is a registered 501(c)(3) public charity focused on running and amateur sports, founded in 1976. Located at 1012 Valleybrook Dr, Hagerstown, MD 21742. All donations are tax-deductible to the extent allowed by law.",
+    ein: "EIN: 52-1867770",
   },
   meets: [
-    { id: 1, date: "June 11, 2026", time: "6:00 PM", location: "Hagerstown Community College Track", title: "Meet #1 — Season Opener", events: "100m, 200m, 400m, 800m, 1500m, Long Jump, Shot Put", status: "upcoming" },
-    { id: 2, date: "June 25, 2026", time: "6:00 PM", location: "Hagerstown Community College Track", title: "Meet #2", events: "100m, 200m, 400m, 800m, Mile, High Jump, Discus", status: "upcoming" },
-    { id: 3, date: "July 9, 2026", time: "6:00 PM", location: "Hagerstown Community College Track", title: "Meet #3", events: "100m, 200m, 400m, 800m, 1500m, Long Jump, Shot Put", status: "upcoming" },
-    { id: 4, date: "July 23, 2026", time: "6:00 PM", location: "Hagerstown Community College Track", title: "Meet #4 — Season Finale", events: "All Events Championship Meet", status: "upcoming" },
+    { id: 1, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 120 Pennsylvania Ave, Hagerstown, MD", title: "Meet #1 — Season Opener", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
+    { id: 2, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 120 Pennsylvania Ave, Hagerstown, MD", title: "Meet #2", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
+    { id: 3, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 120 Pennsylvania Ave, Hagerstown, MD", title: "Meet #3", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
+    { id: 4, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 120 Pennsylvania Ave, Hagerstown, MD", title: "Meet #4 — Season Finale", events: "All Events Championship Meet", status: "upcoming" },
   ],
   results: [
     { id: 1, season: "2025", meetName: "Meet #1 — Season Opener", date: "June 12, 2025", downloadUrl: "#", highlights: "Over 120 athletes participated!" },
@@ -49,9 +49,9 @@ const DEFAULT_DATA = {
   albums: [],
   gallery: [],
   contact: {
-    email: "backontrack@cvathletic.org",
+    email: "backontrackhgr@gmail.com",
     phone: "(301) 555-0100",
-    address: "Hagerstown Community College, 11400 Robinwood Dr, Hagerstown, MD 21742",
+    address: "North Hagerstown High School, 120 Pennsylvania Ave, Hagerstown, MD",
     facebook: "https://www.facebook.com/",
     instagram: "https://www.instagram.com/",
   },
@@ -381,7 +381,7 @@ export default function HomePage() {
               TRACK
             </span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-icon.png" alt="" style={{ height: 34, marginLeft: "-0.15rem" }} />
+            <img src="/logo-icon.png" alt="" style={{ height: 34, marginLeft: "-0.15rem", filter: "brightness(0) invert(1)" }} />
           </div>
           <ul className="nav-links">
             {navItems.map((item) => (
@@ -412,10 +412,6 @@ export default function HomePage() {
 
       {/* ── HERO ─── */}
       <section id="home" className="hero hero-white">
-        <div className="hero-track">
-          <div className="hero-track-lanes" />
-          <div className="hero-track-lines" />
-        </div>
         <div className="hero-content">
           {adminMode && (
             <button className="hero-edit-home-btn" onClick={() => openEdit("hero", data.hero)}>
@@ -447,11 +443,11 @@ export default function HomePage() {
           </div>
           <div className="info-item">
             <span className="info-item-label">Location</span>
-            <span className="info-item-value">Hagerstown, MD</span>
+            <span className="info-item-value">North Hagerstown High School</span>
           </div>
           <div className="info-item">
             <span className="info-item-label">501(c)(3) Nonprofit</span>
-            <span className="info-item-value">Cumberland Valley AC</span>
+            <span className="info-item-value">Cumberland Valley Athletic Club</span>
           </div>
         </div>
       </div>
@@ -499,7 +495,7 @@ export default function HomePage() {
         <div className="section-inner">
           <div className="section-subtitle">2026 Season</div>
           <h2 className="section-title">Upcoming Meets</h2>
-          <p className="section-desc">Mark your calendar for this summer&apos;s All-Comers Track & Field Series. All meets are free to attend and open to athletes of every age and ability.</p>
+          <p className="section-desc">Dates will be announced soon for this summer&apos;s All-Comers Track & Field Series. All meets are free to attend for students. All other participants: $5 per event. Open to athletes of every age and ability.</p>
 
           <div className="waiver-banner">
             <FileText size={28} style={{ color: colors.orange, flexShrink: 0 }} />
@@ -526,7 +522,7 @@ export default function HomePage() {
                   <div className="meet-card-date">{meet.date}</div>
                 </div>
                 <div className="meet-card-body">
-                  <div className="meet-card-detail"><Clock size={16} /><span>{meet.time} — Registration at 5:30 PM</span></div>
+                  <div className="meet-card-detail"><Clock size={16} /><span>{meet.time} — Registration at 5:45 PM</span></div>
                   <div className="meet-card-detail"><MapPin size={16} /><span>{meet.location}</span></div>
                   <div className="meet-card-detail"><Trophy size={16} /><span>{meet.events}</span></div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.5rem" }}>
@@ -787,10 +783,17 @@ export default function HomePage() {
             </div>
           </div>
           <div>
-            <div style={{ background: colors.lightGray, borderRadius: 16, padding: "2rem", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "1rem", minHeight: 300 }}>
-              <MapPin size={48} style={{ color: colors.orange, opacity: 0.5 }} />
-              <p style={{ fontWeight: 700, textAlign: "center", color: colors.medGray }}>Map — Hagerstown Community College Track</p>
-              <p style={{ fontSize: "0.85rem", color: colors.medGray, textAlign: "center", fontWeight: 200 }}>11400 Robinwood Dr, Hagerstown, MD 21742</p>
+            <div style={{ borderRadius: 16, overflow: "hidden", height: "100%", minHeight: 300 }}>
+              <iframe
+                title="North Hagerstown High School Map"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3075.5!2d-77.73!3d39.65!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c9e1f6f3b3b3b3%3A0x0!2sNorth+Hagerstown+High+School!5e0!3m2!1sen!2sus!4v1"
+                width="100%"
+                height="100%"
+                style={{ border: 0, minHeight: 300 }}
+                allowFullScreen=""
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
             </div>
           </div>
         </div>
@@ -833,6 +836,9 @@ export default function HomePage() {
         </div>
         <div className="footer-bottom">
           <span>&copy; {new Date().getFullYear()} {data.about.orgName}. All rights reserved.</span>
+          <a href="https://bperkins-wlr.github.io" target="_blank" rel="noopener noreferrer" className="built-by-credit">
+            Built by <span className="bp-credit-bp">BP</span><span className="bp-credit-slash">/</span><span className="bp-credit-wd">Web Design</span>
+          </a>
           <span style={{ cursor: "pointer", transition: "color 0.2s" }} onClick={() => setShowAdminLogin(true)}>Admin</span>
         </div>
       </footer>
