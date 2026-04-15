@@ -88,6 +88,30 @@ export default function HomePage() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [galleryUploading, setGalleryUploading] = useState(false);
 
+  // ─── Load saved data from API on mount ───
+  useEffect(() => {
+    fetch("/api/data")
+      .then((res) => {
+        if (res.status === 200) return res.json();
+        return null;
+      })
+      .then((saved) => {
+        if (saved) {
+          setData((prev) => ({ ...prev, ...saved }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // ─── Save data to API helper ───
+  const persistData = (newData) => {
+    fetch("/api/data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: "BOT2026", data: newData }),
+    }).catch(() => {});
+  };
+
   // ─── Cloudinary config ───
   const CLOUD_NAME = "dmvkf3ms8";
   const UPLOAD_PRESET = "backontrack_unsigned";
@@ -339,6 +363,7 @@ export default function HomePage() {
       newData.sponsors = [...newData.sponsors, { ...editData, id: Date.now() }];
     }
     setData(newData);
+    persistData(newData);
     setEditModal(null);
     setEditData({});
   };
@@ -349,6 +374,7 @@ export default function HomePage() {
     if (type === "result") newData.results = newData.results.filter((r) => r.id !== id);
     if (type === "sponsor") newData.sponsors = newData.sponsors.filter((s) => s.id !== id);
     setData(newData);
+    persistData(newData);
   };
 
   const navItems = [
