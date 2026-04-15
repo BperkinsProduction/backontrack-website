@@ -408,7 +408,7 @@ export default function HomePage() {
               TRACK
             </span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-icon.png" alt="" style={{ height: 34, marginLeft: "-0.15rem", filter: "brightness(0) invert(1)" }} />
+            <img src="/logo-nav.png" alt="" style={{ height: 34, marginLeft: "-0.15rem" }} />
           </div>
           <ul className="nav-links">
             {navItems.map((item) => (
