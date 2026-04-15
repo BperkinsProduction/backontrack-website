@@ -30,10 +30,10 @@ const DEFAULT_DATA = {
     ein: "EIN: 52-1867770",
   },
   meets: [
-    { id: 1, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 120 Pennsylvania Ave, Hagerstown, MD", title: "Meet #1 — Season Opener", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
-    { id: 2, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 120 Pennsylvania Ave, Hagerstown, MD", title: "Meet #2", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
-    { id: 3, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 120 Pennsylvania Ave, Hagerstown, MD", title: "Meet #3", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
-    { id: 4, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 120 Pennsylvania Ave, Hagerstown, MD", title: "Meet #4 — Season Finale", events: "All Events Championship Meet", status: "upcoming" },
+    { id: 1, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21742", title: "Meet #1 — Season Opener", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
+    { id: 2, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21742", title: "Meet #2", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
+    { id: 3, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21742", title: "Meet #3", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
+    { id: 4, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21742", title: "Meet #4 — Season Finale", events: "All Events Championship Meet", status: "upcoming" },
   ],
   results: [
     { id: 1, season: "2025", meetName: "Meet #1 — Season Opener", date: "June 12, 2025", downloadUrl: "#", highlights: "Over 120 athletes participated!" },
@@ -51,7 +51,7 @@ const DEFAULT_DATA = {
   contact: {
     email: "backontrackhgr@gmail.com",
     phone: "(301) 555-0100",
-    address: "North Hagerstown High School, 120 Pennsylvania Ave, Hagerstown, MD",
+    address: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21742",
     facebook: "https://www.facebook.com/",
     instagram: "https://www.instagram.com/",
   },
@@ -786,7 +786,7 @@ export default function HomePage() {
             <div style={{ borderRadius: 16, overflow: "hidden", height: "100%", minHeight: 300 }}>
               <iframe
                 title="North Hagerstown High School Map"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3075.5!2d-77.73!3d39.65!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c9e1f6f3b3b3b3%3A0x0!2sNorth+Hagerstown+High+School!5e0!3m2!1sen!2sus!4v1"
+                src="https://maps.google.com/maps?q=North+Hagerstown+High+School,+1200+Pennsylvania+Avenue,+Hagerstown,+MD+21742&output=embed"
                 width="100%"
                 height="100%"
                 style={{ border: 0, minHeight: 300 }}
