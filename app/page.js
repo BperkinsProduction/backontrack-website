@@ -52,8 +52,8 @@ const DEFAULT_DATA = {
     email: "backontrackhgr@gmail.com",
     phone: "(301) 555-0100",
     address: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21742",
-    facebook: "https://www.facebook.com/",
-    instagram: "https://www.instagram.com/",
+    facebook: "https://www.facebook.com/share/1AcREfrN7c/?mibextid=wwXIfr",
+    instagram: "https://www.instagram.com/backontrackhgr?igsh=MTQ0c3F6bHZ3Ym81dQ==",
   },
   waiverUrl: "/Back-on-Track-Athlete-Waiver.pdf",
   privacyPolicy:
