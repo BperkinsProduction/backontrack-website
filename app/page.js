@@ -26,14 +26,14 @@ const DEFAULT_DATA = {
     director: "Laura Salvatore",
     directorTitle: "Meet Director",
     nonprofit:
-      "Cumberland Valley Athletic Club (operating under the Road Runners Club of America) is a registered 501(c)(3) public charity focused on running and amateur sports, founded in 1976. Located at 1012 Valleybrook Dr, Hagerstown, MD 21742. All donations are tax-deductible to the extent allowed by law.",
+      "Cumberland Valley Athletic Club (operating under the Road Runners Club of America) is a registered 501(c)(3) public charity focused on running and amateur sports, founded in 1976. Located at 1012 Valleybrook Dr, Hagerstown, MD 21740. All donations are tax-deductible to the extent allowed by law.",
     ein: "EIN: 52-1867770",
   },
   meets: [
-    { id: 1, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21742", title: "Meet #1 — Season Opener", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
-    { id: 2, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21742", title: "Meet #2", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
-    { id: 3, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21742", title: "Meet #3", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
-    { id: 4, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21742", title: "Meet #4 — Season Finale", events: "All Events Championship Meet", status: "upcoming" },
+    { id: 1, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21740", title: "Meet #1 — Season Opener", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
+    { id: 2, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21740", title: "Meet #2", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
+    { id: 3, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21740", title: "Meet #3", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
+    { id: 4, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21740", title: "Meet #4 — Season Finale", events: "All Events Championship Meet", status: "upcoming" },
   ],
   results: [
     { id: 1, season: "2025", meetName: "Meet #1 — Season Opener", date: "June 12, 2025", downloadUrl: "#", highlights: "Over 120 athletes participated!" },
@@ -51,7 +51,7 @@ const DEFAULT_DATA = {
   contact: {
     email: "backontrackhgr@gmail.com",
     phone: "(301) 555-0100",
-    address: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21742",
+    address: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21740",
     facebook: "https://www.facebook.com/share/1AcREfrN7c/?mibextid=wwXIfr",
     instagram: "https://www.instagram.com/backontrackhgr?igsh=MTQ0c3F6bHZ3Ym81dQ==",
   },
@@ -834,7 +834,7 @@ export default function HomePage() {
             <div style={{ borderRadius: 16, overflow: "hidden", height: "100%", minHeight: 300 }}>
               <iframe
                 title="North Hagerstown High School Map"
-                src="https://maps.google.com/maps?q=North+Hagerstown+High+School,+1200+Pennsylvania+Avenue,+Hagerstown,+MD+21742&output=embed"
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(data.contact.address)}&output=embed`}
                 width="100%"
                 height="100%"
                 style={{ border: 0, minHeight: 300 }}
