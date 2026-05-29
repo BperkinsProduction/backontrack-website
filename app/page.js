@@ -166,6 +166,13 @@ export default function HomePage() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [galleryUploading, setGalleryUploading] = useState(false);
   const [editError, setEditError] = useState("");
+  const [browseOpen, setBrowseOpen] = useState(false);
+  const [browseTarget, setBrowseTarget] = useState(null); // album id, or null = General
+  const [browseAssets, setBrowseAssets] = useState([]);
+  const [browseSelected, setBrowseSelected] = useState([]);
+  const [browseLoading, setBrowseLoading] = useState(false);
+  const [browseError, setBrowseError] = useState("");
+  const [browseCursor, setBrowseCursor] = useState(null);
 
   // ─── Load saved data from API on mount ───
   useEffect(() => {
@@ -200,6 +207,79 @@ export default function HomePage() {
       credentials: "same-origin",
       body: JSON.stringify({ data: newData }),
     }).catch(() => {});
+  };
+
+  // ─── Browse existing Cloudinary photos (admin only) ───
+  const loadBrowseAssets = async (cursor) => {
+    setBrowseLoading(true);
+    setBrowseError("");
+    try {
+      const url = cursor
+        ? `/api/cloudinary-assets?cursor=${encodeURIComponent(cursor)}`
+        : "/api/cloudinary-assets";
+      const res = await fetch(url, { credentials: "same-origin" });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        setBrowseError(j.error || "Could not load your Cloudinary photos.");
+        setBrowseLoading(false);
+        return;
+      }
+      const json = await res.json();
+      setBrowseAssets((prev) => (cursor ? [...prev, ...json.resources] : json.resources));
+      setBrowseCursor(json.nextCursor);
+    } catch {
+      setBrowseError("Could not reach the server.");
+    }
+    setBrowseLoading(false);
+  };
+
+  const openBrowse = (albumId) => {
+    setBrowseTarget(albumId ?? null);
+    setBrowseSelected([]);
+    setBrowseAssets([]);
+    setBrowseCursor(null);
+    setBrowseError("");
+    setBrowseOpen(true);
+    loadBrowseAssets(null);
+  };
+
+  const toggleBrowseSelect = (publicId) => {
+    setBrowseSelected((prev) =>
+      prev.includes(publicId)
+        ? prev.filter((p) => p !== publicId)
+        : [...prev, publicId]
+    );
+  };
+
+  const addBrowsedToGallery = () => {
+    if (browseSelected.length === 0) {
+      setBrowseOpen(false);
+      return;
+    }
+    const albumId = browseTarget === null ? "general" : browseTarget;
+    const chosen = browseAssets.filter((a) => browseSelected.includes(a.publicId));
+    const newItems = chosen.map((a) => ({
+      id: a.publicId,
+      albumId,
+      imageUrl: a.previewUrl,
+      fullUrl: a.fullUrl,
+      caption: "",
+    }));
+    setData((prev) => {
+      // Remove any existing copies of the picked images, then add them to the
+      // chosen album — keeps a photo from appearing twice or in two albums.
+      const deduped = prev.gallery.filter((g) => !browseSelected.includes(g.id));
+      const albums = prev.albums.map((al) =>
+        al.id === albumId && !al.coverUrl && newItems[0]
+          ? { ...al, coverUrl: newItems[0].imageUrl }
+          : al
+      );
+      const finalData = { ...prev, albums, gallery: [...deduped, ...newItems] };
+      persistData(finalData);
+      return finalData;
+    });
+    setBrowseOpen(false);
+    setBrowseSelected([]);
   };
 
   // ─── Cloudinary config ───
@@ -246,7 +326,13 @@ export default function HomePage() {
             caption: img.context?.custom?.caption || "",
           }));
           if (images.length > 0) {
-            setData((prev) => ({ ...prev, gallery: [...prev.gallery, ...images] }));
+            setData((prev) => {
+              const existing = new Set(prev.gallery.map((g) => g.id));
+              const fresh = images.filter((img) => !existing.has(img.id));
+              return fresh.length > 0
+                ? { ...prev, gallery: [...prev.gallery, ...fresh] }
+                : prev;
+            });
           }
         }
       } catch (e) {
@@ -276,13 +362,13 @@ export default function HomePage() {
               caption: img.context?.custom?.caption || "",
             }));
             if (images.length > 0) {
-              setData((prev) => ({
-                ...prev,
-                gallery: [
-                  ...prev.gallery.filter((g) => g.albumId !== album.id),
-                  ...images,
-                ],
-              }));
+              setData((prev) => {
+                const existing = new Set(prev.gallery.map((g) => g.id));
+                const fresh = images.filter((img) => !existing.has(img.id));
+                return fresh.length > 0
+                  ? { ...prev, gallery: [...prev.gallery, ...fresh] }
+                  : prev;
+              });
             }
           }
         } catch (e) {
@@ -891,6 +977,9 @@ export default function HomePage() {
             <button className="gallery-upload-btn" onClick={() => openEdit("album-add")}>
               <FolderPlus size={18} /> Create Album
             </button>
+            <button className="gallery-upload-btn" onClick={() => openBrowse(null)}>
+              <ImageIcon size={18} /> Browse Cloudinary
+            </button>
           </div>
         )}
 
@@ -925,6 +1014,9 @@ export default function HomePage() {
                       <div className="album-admin-actions">
                         <button className="gallery-upload-btn" onClick={() => openCloudinaryUpload(album.id)} style={{ fontSize: "0.8rem", padding: "0.5rem 1rem" }}>
                           <Upload size={14} /> Upload
+                        </button>
+                        <button className="gallery-upload-btn" onClick={() => openBrowse(album.id)} style={{ fontSize: "0.8rem", padding: "0.5rem 1rem" }}>
+                          <ImageIcon size={14} /> Browse
                         </button>
                         <button className="album-delete-btn" onClick={() => deleteAlbum(album.id)} title="Delete album">
                           <Trash2 size={14} />
@@ -971,6 +1063,9 @@ export default function HomePage() {
                     <div className="album-admin-actions">
                       <button className="gallery-upload-btn" onClick={() => openCloudinaryUpload(null)} style={{ fontSize: "0.8rem", padding: "0.5rem 1rem" }}>
                         <Upload size={14} /> Upload
+                      </button>
+                      <button className="gallery-upload-btn" onClick={() => openBrowse(null)} style={{ fontSize: "0.8rem", padding: "0.5rem 1rem" }}>
+                        <ImageIcon size={14} /> Browse
                       </button>
                     </div>
                   )}
@@ -1358,6 +1453,67 @@ export default function HomePage() {
               ) : (
                 <button className="btn-sm primary" onClick={saveEdit} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}><Save size={14} /> Save Changes</button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── BROWSE CLOUDINARY MODAL ─── */}
+      {browseOpen && (
+        <div className="admin-modal" onClick={() => setBrowseOpen(false)}>
+          <div className="admin-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 760, width: "92%" }}>
+            <h3 style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              <ImageIcon size={18} /> Add Photos from Cloudinary
+            </h3>
+            <p style={{ fontSize: "0.85rem", color: colors.medGray, marginBottom: "1rem" }}>
+              {browseTarget === null
+                ? "Selected photos will be added to General Photos."
+                : `Selected photos will be added to "${(data.albums.find((a) => a.id === browseTarget) || {}).name || "this album"}".`}
+            </p>
+
+            {browseError && (
+              <p style={{ color: "#f44336", fontSize: "0.85rem", marginBottom: "0.75rem" }}>{browseError}</p>
+            )}
+
+            {browseLoading && browseAssets.length === 0 ? (
+              <p style={{ color: colors.medGray, textAlign: "center", padding: "2rem" }}>Loading your Cloudinary photos…</p>
+            ) : !browseError && browseAssets.length === 0 ? (
+              <p style={{ color: colors.medGray, textAlign: "center", padding: "2rem" }}>No photos found in your Cloudinary account.</p>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "0.5rem", maxHeight: "50vh", overflowY: "auto", padding: "0.25rem" }}>
+                {browseAssets.map((a) => {
+                  const selected = browseSelected.includes(a.publicId);
+                  return (
+                    <button
+                      key={a.publicId}
+                      type="button"
+                      onClick={() => toggleBrowseSelect(a.publicId)}
+                      style={{ position: "relative", padding: 0, border: selected ? `3px solid ${colors.orange}` : "3px solid transparent", borderRadius: 8, overflow: "hidden", cursor: "pointer", aspectRatio: "3 / 2", background: colors.lightGray }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={a.thumbUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} loading="lazy" />
+                      {selected && (
+                        <div style={{ position: "absolute", top: 4, right: 4, background: colors.orange, borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <CheckCircle size={16} color="#fff" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {browseCursor && !browseLoading && (
+              <button type="button" className="btn-sm ghost" onClick={() => loadBrowseAssets(browseCursor)} style={{ marginTop: "0.75rem" }}>
+                Load more
+              </button>
+            )}
+
+            <div className="admin-btn-row">
+              <button className="btn-sm ghost" onClick={() => setBrowseOpen(false)}>Cancel</button>
+              <button className="btn-sm primary" onClick={addBrowsedToGallery} disabled={browseSelected.length === 0} style={{ display: "flex", alignItems: "center", gap: "0.4rem", opacity: browseSelected.length === 0 ? 0.5 : 1 }}>
+                <Plus size={14} /> Add {browseSelected.length > 0 ? browseSelected.length : ""} {browseSelected.length === 1 ? "Photo" : "Photos"}
+              </button>
             </div>
           </div>
         </div>

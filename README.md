@@ -65,6 +65,9 @@ Set these in Vercel (Project Settings → Environment Variables) and in a local 
 | `SESSION_SECRET` | Random 32+ character secret used to sign admin session cookies. Generate with `openssl rand -hex 32`. |
 | `STORAGE_REST_API_URL` (or `KV_REST_API_URL`) | Vercel KV endpoint. Set automatically when you connect a KV store in Vercel. |
 | `STORAGE_REST_API_TOKEN` (or `KV_REST_API_TOKEN`) | Vercel KV token. Set automatically when you connect a KV store in Vercel. |
+| `CLOUDINARY_API_KEY` | Cloudinary API key (Cloudinary console → Settings → API Keys). Needed for the admin "Browse Cloudinary" photo picker. |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret. **Keep secret** — server-side only, never exposed to the browser. Mark as Sensitive in Vercel. |
+| `CLOUDINARY_CLOUD_NAME` | Optional. Defaults to `dmvkf3ms8`. Only set if you move to a different Cloudinary cloud. |
 
 If `ADMIN_PASSWORD` or `SESSION_SECRET` is missing, login will fail with a 500 — this is intentional, never deploy without them.
 
