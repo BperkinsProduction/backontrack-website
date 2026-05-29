@@ -46,6 +46,7 @@ const DEFAULT_DATA = {
     { id: 2, name: "Community Sponsor 2", level: "Silver", logoUrl: "", website: "#" },
     { id: 3, name: "Community Sponsor 3", level: "Bronze", logoUrl: "", website: "#" },
   ],
+  media: [],
   albums: [],
   gallery: [],
   contact: {
@@ -418,6 +419,10 @@ export default function HomePage() {
       newData.sponsors = newData.sponsors.map((s) => (s.id === editData.id ? editData : s));
     } else if (editModal === "sponsor-add") {
       newData.sponsors = [...newData.sponsors, { ...editData, id: Date.now() }];
+    } else if (editModal === "media-edit") {
+      newData.media = newData.media.map((m) => (m.id === editData.id ? editData : m));
+    } else if (editModal === "media-add") {
+      newData.media = [...newData.media, { ...editData, id: Date.now() }];
     }
     setData(newData);
     persistData(newData);
@@ -430,6 +435,7 @@ export default function HomePage() {
     if (type === "meet") newData.meets = newData.meets.filter((m) => m.id !== id);
     if (type === "result") newData.results = newData.results.filter((r) => r.id !== id);
     if (type === "sponsor") newData.sponsors = newData.sponsors.filter((s) => s.id !== id);
+    if (type === "media") newData.media = newData.media.filter((m) => m.id !== id);
     setData(newData);
     persistData(newData);
   };
@@ -437,6 +443,7 @@ export default function HomePage() {
   const navItems = [
     { id: "home", label: "Home" },
     { id: "about", label: "About" },
+    { id: "media", label: "Media" },
     { id: "schedule", label: "Schedule" },
     { id: "results", label: "Results" },
     { id: "gallery", label: "Gallery" },
@@ -568,6 +575,61 @@ export default function HomePage() {
           </p>
         </div>
       </section>
+
+      {/* ── MEDIA ─── */}
+      {(data.media && data.media.length > 0 || adminMode) && (
+        <section id="media" className="section-alt">
+          <div className="section-inner">
+            <div className="section-subtitle">Videos & Flyers</div>
+            <h2 className="section-title">Media</h2>
+            <p className="section-desc">Check out our latest videos and downloadable flyers.</p>
+
+            {adminMode && (
+              <button className="btn-sm primary" onClick={() => openEdit("media-add")} style={{ marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                <Plus size={14} /> Add Video or Flyer
+              </button>
+            )}
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem" }}>
+              {(data.media || []).map((item) => (
+                <div key={item.id} style={{ borderRadius: 12, overflow: "hidden", background: "white", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.06)" }}>
+                  {item.type === "video" && item.url && (
+                    <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
+                      <iframe
+                        src={item.url.includes("youtube.com/watch") ? item.url.replace("watch?v=", "embed/") : item.url.includes("youtu.be/") ? `https://www.youtube.com/embed/${item.url.split("youtu.be/")[1].split("?")[0]}` : item.url}
+                        title={item.title || "Video"}
+                        style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
+                        allowFullScreen
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  {item.type === "flyer" && item.url && (
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "2rem", textAlign: "center", background: "#FFF8F0" }}>
+                      <FileText size={48} style={{ color: "#F5A123", marginBottom: "0.5rem" }} />
+                      <div style={{ fontWeight: 600, color: "#1A1A1A" }}>View Flyer</div>
+                    </a>
+                  )}
+                  <div style={{ padding: "1rem" }}>
+                    <h4 style={{ fontWeight: 700, marginBottom: "0.25rem" }}>{item.title || "Untitled"}</h4>
+                    {item.description && <p style={{ fontSize: "0.85rem", color: "#666" }}>{item.description}</p>}
+                    {adminMode && (
+                      <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
+                        <button className="btn-sm ghost" onClick={() => openEdit("media-edit", item)}><Edit3 size={12} /></button>
+                        <button className="btn-sm danger" style={{ padding: "0.4rem 0.6rem" }} onClick={() => deleteItem("media", item.id)}><Trash2 size={12} /></button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {(!data.media || data.media.length === 0) && adminMode && (
+              <p style={{ color: "#666", textAlign: "center", padding: "2rem" }}>No media yet. Click &quot;Add Video or Flyer&quot; to get started.</p>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ── SCHEDULE ─── */}
       <section id="schedule" className="section-alt">
