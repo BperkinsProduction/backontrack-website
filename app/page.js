@@ -840,19 +840,26 @@ export default function HomePage() {
           )}
 
           <div className="sponsors-grid">
-            {data.sponsors.map((sponsor) => (
-              <div key={sponsor.id} className="sponsor-card">
-                <div className="sponsor-logo-placeholder"><Star size={24} /></div>
-                <div className="sponsor-name">{sponsor.name}</div>
-                <div className="sponsor-level">{sponsor.level} Sponsor</div>
-                {adminMode && (
-                  <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", marginTop: "0.75rem" }}>
-                    <button className="btn-sm ghost" onClick={() => openEdit("sponsor-edit", sponsor)}><Edit3 size={12} /></button>
-                    <button className="btn-sm danger" style={{ padding: "0.4rem 0.6rem" }} onClick={() => deleteItem("sponsor", sponsor.id)}><Trash2 size={12} /></button>
-                  </div>
-                )}
-              </div>
-            ))}
+            {data.sponsors.map((sponsor) => {
+              const card = (
+                <div key={sponsor.id} className="sponsor-card" style={sponsor.website && sponsor.website !== "#" ? { cursor: "pointer" } : {}}>
+                  <div className="sponsor-logo-placeholder"><Star size={24} /></div>
+                  <div className="sponsor-name">{sponsor.name}</div>
+                  <div className="sponsor-level">{sponsor.level} Sponsor</div>
+                  {adminMode && (
+                    <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", marginTop: "0.75rem" }}>
+                      <button className="btn-sm ghost" onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEdit("sponsor-edit", sponsor); }}><Edit3 size={12} /></button>
+                      <button className="btn-sm danger" style={{ padding: "0.4rem 0.6rem" }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteItem("sponsor", sponsor.id); }}><Trash2 size={12} /></button>
+                    </div>
+                  )}
+                </div>
+              );
+              return sponsor.website && sponsor.website !== "#" ? (
+                <a key={sponsor.id} href={sponsor.website} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", color: "inherit" }}>{card}</a>
+              ) : (
+                card
+              );
+            })}
           </div>
 
           <div style={{ textAlign: "center", marginTop: "2.5rem" }}>
