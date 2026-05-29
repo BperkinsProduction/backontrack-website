@@ -221,8 +221,8 @@ export default function HomePage() {
         multiple: true,
         maxFiles: 20,
         resourceType: "image",
-        clientAllowedFormats: ["jpg", "jpeg", "png", "webp"],
-        maxFileSize: 10000000,
+        clientAllowedFormats: ["jpg", "jpeg", "png", "webp", "heic", "heif", "gif", "bmp", "tiff", "tif"],
+        maxFileSize: 25000000,
         styles: {
           palette: {
             window: "#1A1A1A",
@@ -251,21 +251,22 @@ export default function HomePage() {
             fullUrl: img.secure_url,
             caption: "",
           };
-          setData((prev) => ({
-            ...prev,
-            gallery: [...prev.gallery, newPhoto],
-          }));
-          // If this is the first photo in an album and no cover, set it as cover
-          if (albumId) {
-            setData((prev) => ({
+          setData((prev) => {
+            const updated = {
               ...prev,
-              albums: prev.albums.map((a) =>
+              gallery: [...prev.gallery, newPhoto],
+            };
+            // If this is the first photo in an album and no cover, set it as cover
+            if (albumId) {
+              updated.albums = updated.albums.map((a) =>
                 a.id === albumId && !a.coverUrl
                   ? { ...a, coverUrl: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_fill,w_800,h_400,q_auto,f_auto/${img.public_id}` }
                   : a
-              ),
-            }));
-          }
+              );
+            }
+            persistData(updated);
+            return updated;
+          });
         }
         if (result && result.event === "close") {
           setGalleryUploading(false);
