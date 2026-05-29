@@ -112,6 +112,27 @@ function youtubeEmbedFromUrl(input) {
   return `https://www.youtube-nocookie.com/embed/${id}`;
 }
 
+// Normalize an admin-supplied URL for use in an href:
+// - empty / "#" / non-string  -> null (caller should not render a link)
+// - "/foo" same-origin path   -> returned as-is (used for bundled PDFs)
+// - "www.example.com"         -> "https://www.example.com/" (adds scheme)
+// - "http(s)://..."           -> validated and returned
+// - "javascript:" / "data:"   -> rejected
+function safeExternalUrl(input) {
+  if (typeof input !== "string") return null;
+  const trimmed = input.trim();
+  if (!trimmed || trimmed === "#") return null;
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return trimmed;
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const u = new URL(candidate);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return null;
+    return u.toString();
+  } catch {
+    return null;
+  }
+}
+
 // Restrict flyer URLs to this project's Cloudinary cloud so an admin
 // cannot point the "View Flyer" link at a phishing/malware host.
 const CLOUDINARY_FLYER_PREFIX = "https://res.cloudinary.com/dmvkf3ms8/";
@@ -762,7 +783,7 @@ export default function HomePage() {
               All athletes must have a signed waiver form. Parents/guardians must sign for minors. Waivers are also available at each meet.
             </p>
             <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexShrink: 0 }}>
-              <a className="btn-primary" href={data.waiverUrl} target="_blank" rel="noopener noreferrer" style={{ padding: "0.6rem 1.5rem", fontSize: "0.8rem", whiteSpace: "nowrap" }}>
+              <a className="btn-primary" href={safeExternalUrl(data.waiverUrl) || "#"} target="_blank" rel="noopener noreferrer" style={{ padding: "0.6rem 1.5rem", fontSize: "0.8rem", whiteSpace: "nowrap" }}>
                 Download Waiver
               </a>
               {adminMode && (
@@ -835,7 +856,14 @@ export default function HomePage() {
                   <p>{result.date} — {result.highlights}</p>
                 </div>
                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                  <a href={result.downloadUrl} className="result-badge">View Results</a>
+                  {(() => {
+                    const r = safeExternalUrl(result.downloadUrl);
+                    return r ? (
+                      <a href={r} target="_blank" rel="noopener noreferrer" className="result-badge">View Results</a>
+                    ) : (
+                      <span className="result-badge" style={{ opacity: 0.5 }}>Coming Soon</span>
+                    );
+                  })()}
                   {adminMode && (
                     <>
                       <button className="btn-sm ghost" style={{ color: "white", borderColor: "rgba(255,255,255,0.2)" }} onClick={() => openEdit("result-edit", result)}><Edit3 size={12} /></button>
@@ -1023,8 +1051,9 @@ export default function HomePage() {
 
           <div className="sponsors-grid">
             {data.sponsors.map((sponsor) => {
+              const sponsorUrl = safeExternalUrl(sponsor.website);
               const card = (
-                <div key={sponsor.id} className="sponsor-card" style={sponsor.website && sponsor.website !== "#" ? { cursor: "pointer" } : {}}>
+                <div key={sponsor.id} className="sponsor-card" style={sponsorUrl ? { cursor: "pointer" } : {}}>
                   <div className="sponsor-logo-placeholder"><Star size={24} /></div>
                   <div className="sponsor-name">{sponsor.name}</div>
                   <div className="sponsor-level">{sponsor.level} Sponsor</div>
@@ -1036,8 +1065,8 @@ export default function HomePage() {
                   )}
                 </div>
               );
-              return sponsor.website && sponsor.website !== "#" ? (
-                <a key={sponsor.id} href={sponsor.website} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", color: "inherit" }}>{card}</a>
+              return sponsorUrl ? (
+                <a key={sponsor.id} href={sponsorUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", color: "inherit" }}>{card}</a>
               ) : (
                 card
               );
@@ -1071,8 +1100,18 @@ export default function HomePage() {
             <div className="contact-info-item"><MapPin size={20} /><div><h4>Meet Location</h4><p>{data.contact.address}</p></div></div>
             <div className="contact-info-item"><Users size={20} /><div><h4>Meet Director</h4><p>{data.about.director} — {data.about.directorTitle}</p></div></div>
             <div className="social-links">
-              <a href={data.contact.facebook} target="_blank" rel="noopener noreferrer" className="social-link"><Facebook size={20} /></a>
-              <a href={data.contact.instagram} target="_blank" rel="noopener noreferrer" className="social-link"><Instagram size={20} /></a>
+              {(() => {
+                const fb = safeExternalUrl(data.contact.facebook);
+                return fb ? (
+                  <a href={fb} target="_blank" rel="noopener noreferrer" className="social-link"><Facebook size={20} /></a>
+                ) : null;
+              })()}
+              {(() => {
+                const ig = safeExternalUrl(data.contact.instagram);
+                return ig ? (
+                  <a href={ig} target="_blank" rel="noopener noreferrer" className="social-link"><Instagram size={20} /></a>
+                ) : null;
+              })()}
             </div>
           </div>
           <div>
@@ -1122,7 +1161,7 @@ export default function HomePage() {
             <h4>Legal</h4>
             <a href="#" onClick={(e) => { e.preventDefault(); setShowPrivacy(true); }}>Privacy Policy</a>
             <a href="#" onClick={(e) => { e.preventDefault(); setShowPrivacy(true); }}>Terms of Use</a>
-            <a href={data.waiverUrl} target="_blank" rel="noopener noreferrer">Athlete Waiver Form</a>
+            <a href={safeExternalUrl(data.waiverUrl) || "#"} target="_blank" rel="noopener noreferrer">Athlete Waiver Form</a>
             <a href="/Back-on-Track-Photo-Media-Release.pdf" target="_blank" rel="noopener noreferrer">Photo/Media Release</a>
             <p style={{ marginTop: "0.75rem", fontSize: "0.8rem" }}>{data.about.ein}</p>
           </div>
