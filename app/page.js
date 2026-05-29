@@ -83,7 +83,7 @@ export default function HomePage() {
   const [editData, setEditData] = useState({});
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [newsletterSent, setNewsletterSent] = useState(false);
-  const [selectedResultSeason, setSelectedResultSeason] = useState("2025");
+  const [selectedResultSeason, setSelectedResultSeason] = useState("2026");
   const [galleryFilter, setGalleryFilter] = useState("all");
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [galleryUploading, setGalleryUploading] = useState(false);
@@ -632,7 +632,7 @@ export default function HomePage() {
           <p className="section-desc">Check out past meet results and season standings. Results are posted after each meet.</p>
 
           <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
-            {["2025", "2024", "2023"].map((year) => (
+            {["2026", "2025", "2024", "2023"].map((year) => (
               <button key={year} className={`btn-sm ${selectedResultSeason === year ? "primary" : "ghost"}`} style={selectedResultSeason !== year ? { color: "white", borderColor: "rgba(255,255,255,0.2)" } : {}} onClick={() => setSelectedResultSeason(year)}>
                 {year} Season
               </button>
@@ -1014,8 +1014,29 @@ export default function HomePage() {
                 <div className="admin-field"><label>Season Year</label><input value={editData.season || ""} onChange={(e) => setEditData({ ...editData, season: e.target.value })} placeholder="e.g., 2026" /></div>
                 <div className="admin-field"><label>Meet Name</label><input value={editData.meetName || ""} onChange={(e) => setEditData({ ...editData, meetName: e.target.value })} /></div>
                 <div className="admin-field"><label>Date</label><input value={editData.date || ""} onChange={(e) => setEditData({ ...editData, date: e.target.value })} /></div>
-                <div className="admin-field"><label>Highlights</label><input value={editData.highlights || ""} onChange={(e) => setEditData({ ...editData, highlights: e.target.value })} /></div>
-                <div className="admin-field"><label>Results URL</label><input value={editData.downloadUrl || ""} onChange={(e) => setEditData({ ...editData, downloadUrl: e.target.value })} placeholder="https://..." /></div>
+                <div className="admin-field"><label>Highlights</label><input value={editData.highlights || ""} onChange={(e) => setEditData({ ...editData, highlights: e.target.value })} placeholder="e.g., Great turnout!" /></div>
+                <div className="admin-field">
+                  <label>Results PDF</label>
+                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                    <input value={editData.downloadUrl || ""} onChange={(e) => setEditData({ ...editData, downloadUrl: e.target.value })} placeholder="URL will appear here after upload" style={{ flex: 1 }} />
+                    <button type="button" className="btn-sm primary" onClick={() => {
+                      if (!window.cloudinary) { alert("Upload widget is still loading."); return; }
+                      const w = window.cloudinary.createUploadWidget({
+                        cloudName: CLOUD_NAME, uploadPreset: UPLOAD_PRESET,
+                        folder: "backontrack-results", sources: ["local"], multiple: false, maxFiles: 1,
+                        resourceType: "raw", clientAllowedFormats: ["pdf"], maxFileSize: 10000000,
+                        styles: { palette: { window: "#1A1A1A", windowBorder: "#F5A123", tabIcon: "#F5A123", menuIcons: "#F5A123", textDark: "#1A1A1A", textLight: "#FFFFFF", link: "#F5A123", action: "#F5A123", inactiveTabIcon: "#888", error: "#FF4444", inProgress: "#F5A123", complete: "#28A745", sourceBg: "#2A2A2A" } }
+                      }, (err, res) => {
+                        if (!err && res && res.event === "success") {
+                          setEditData((prev) => ({ ...prev, downloadUrl: res.info.secure_url }));
+                        }
+                      });
+                      w.open();
+                    }} style={{ display: "flex", alignItems: "center", gap: "0.4rem", whiteSpace: "nowrap" }}>
+                      <Upload size={14} /> Upload PDF
+                    </button>
+                  </div>
+                </div>
               </>
             )}
             {(editModal === "sponsor-edit" || editModal === "sponsor-add") && (
