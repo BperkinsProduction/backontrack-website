@@ -962,7 +962,7 @@ export default function HomePage() {
             <div style={{ borderRadius: 16, overflow: "hidden", height: "100%", minHeight: 300 }}>
               <iframe
                 title="North Hagerstown High School Map"
-                src={`https://maps.google.com/maps?q=${encodeURIComponent(data.contact.address)}&output=embed`}
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(data.contact.address)}&t=m&z=15&output=embed`}
                 width="100%"
                 height="100%"
                 style={{ border: 0, minHeight: 300 }}
