@@ -863,7 +863,7 @@ export default function HomePage() {
           </div>
 
           <div style={{ textAlign: "center", marginTop: "2.5rem" }}>
-            <a className="btn-outline" href="#contact" onClick={(e) => { e.preventDefault(); scrollTo("contact"); }} style={{ color: colors.black, borderColor: colors.black }}>
+            <a className="btn-outline" href="https://www.zeffy.com/en-US/donation-form/donate-to-pete-wright-memorial-all-comers-summer-track-series" target="_blank" rel="noopener noreferrer" style={{ color: colors.black, borderColor: colors.black }}>
               Become a Sponsor
             </a>
           </div>
