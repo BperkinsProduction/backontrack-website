@@ -276,6 +276,55 @@ export default function HomePage() {
     widget.open();
   };
 
+  const openWaiverUpload = () => {
+    if (!window.cloudinary) {
+      alert("Upload widget is still loading. Please try again in a moment.");
+      return;
+    }
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: CLOUD_NAME,
+        uploadPreset: UPLOAD_PRESET,
+        folder: "backontrack-waivers",
+        sources: ["local"],
+        multiple: false,
+        maxFiles: 1,
+        resourceType: "raw",
+        clientAllowedFormats: ["pdf"],
+        maxFileSize: 10000000,
+        styles: {
+          palette: {
+            window: "#1A1A1A",
+            windowBorder: "#F5A123",
+            tabIcon: "#F5A123",
+            menuIcons: "#F5A123",
+            textDark: "#1A1A1A",
+            textLight: "#FFFFFF",
+            link: "#F5A123",
+            action: "#F5A123",
+            inactiveTabIcon: "#888",
+            error: "#FF4444",
+            inProgress: "#F5A123",
+            complete: "#28A745",
+            sourceBg: "#2A2A2A",
+          },
+        },
+      },
+      (error, result) => {
+        if (!error && result && result.event === "success") {
+          const url = result.info.secure_url;
+          setData((prev) => {
+            const updated = { ...prev, waiverUrl: url };
+            persistData(updated);
+            return updated;
+          });
+          alert("Waiver updated successfully!");
+        }
+      }
+    );
+    widget.open();
+  };
+
   const deleteGalleryImage = async (publicId) => {
     setData((prev) => ({
       ...prev,
@@ -530,9 +579,16 @@ export default function HomePage() {
               <strong>Participant Waiver Required</strong>
               All athletes must have a signed waiver form. Parents/guardians must sign for minors. Waivers are also available at each meet.
             </p>
-            <a className="btn-primary" href={data.waiverUrl} target="_blank" rel="noopener noreferrer" style={{ padding: "0.6rem 1.5rem", fontSize: "0.8rem", whiteSpace: "nowrap" }}>
-              Download Waiver
-            </a>
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexShrink: 0 }}>
+              <a className="btn-primary" href={data.waiverUrl} target="_blank" rel="noopener noreferrer" style={{ padding: "0.6rem 1.5rem", fontSize: "0.8rem", whiteSpace: "nowrap" }}>
+                Download Waiver
+              </a>
+              {adminMode && (
+                <button className="btn-sm primary" onClick={openWaiverUpload} style={{ display: "flex", alignItems: "center", gap: "0.4rem", whiteSpace: "nowrap" }}>
+                  <Upload size={14} /> Replace Waiver
+                </button>
+              )}
+            </div>
           </div>
 
           {adminMode && (
