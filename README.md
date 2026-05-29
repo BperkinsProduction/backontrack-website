@@ -51,7 +51,22 @@ Then open http://localhost:3000
 
 ## Admin Panel
 
-Click "Admin" in the footer and enter the password: `BackOnTrack2026`
+Click "Admin" in the footer and enter the admin password.
+
+The password is no longer hardcoded — it is read from the `ADMIN_PASSWORD` environment variable on the server. Logins set a signed HTTP-only session cookie; the bundle the browser downloads contains no secrets.
+
+### Required environment variables
+
+Set these in Vercel (Project Settings → Environment Variables) and in a local `.env.local` for development:
+
+| Variable | Purpose |
+|---|---|
+| `ADMIN_PASSWORD` | The password admins type to log in. Use a long random string. |
+| `SESSION_SECRET` | Random 32+ character secret used to sign admin session cookies. Generate with `openssl rand -hex 32`. |
+| `STORAGE_REST_API_URL` (or `KV_REST_API_URL`) | Vercel KV endpoint. Set automatically when you connect a KV store in Vercel. |
+| `STORAGE_REST_API_TOKEN` (or `KV_REST_API_TOKEN`) | Vercel KV token. Set automatically when you connect a KV store in Vercel. |
+
+If `ADMIN_PASSWORD` or `SESSION_SECRET` is missing, login will fail with a 500 — this is intentional, never deploy without them.
 
 From admin mode you can:
 - Edit the hero section text
@@ -61,8 +76,7 @@ From admin mode you can:
 - Add, edit, or delete sponsors
 - Update contact information
 
-**Note:** Changes are currently stored in-memory and reset on page reload.
-For persistent editing, a database backend (like Supabase) can be added later.
+Changes persist to Vercel KV. Admin sessions expire after 8 hours.
 
 ---
 

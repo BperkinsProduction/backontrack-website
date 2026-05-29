@@ -26,14 +26,14 @@ const DEFAULT_DATA = {
     director: "Laura Salvatore",
     directorTitle: "Meet Director",
     nonprofit:
-      "Cumberland Valley Athletic Club (operating under the Road Runners Club of America) is a registered 501(c)(3) public charity focused on running and amateur sports, founded in 1976. Located at 1012 Valleybrook Dr, Hagerstown, MD 21740. All donations are tax-deductible to the extent allowed by law.",
+      "Cumberland Valley Athletic Club (operating under the Road Runners Club of America) is a registered 501(c)(3) public charity focused on running and amateur sports, founded in 1976. Located at 1012 Valleybrook Dr, Hagerstown, MD 21742. All donations are tax-deductible to the extent allowed by law.",
     ein: "EIN: 52-1867770",
   },
   meets: [
-    { id: 1, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21740", title: "Meet #1 — Season Opener", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
-    { id: 2, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21740", title: "Meet #2", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
-    { id: 3, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21740", title: "Meet #3", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
-    { id: 4, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21740", title: "Meet #4 — Season Finale", events: "All Events Championship Meet", status: "upcoming" },
+    { id: 1, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21742", title: "Meet #1 — Season Opener", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
+    { id: 2, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21742", title: "Meet #2", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
+    { id: 3, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21742", title: "Meet #3", events: "100m, 200m, 400m, 800m, 1 Mile, 2 Mile, Shot Put, Relays", status: "upcoming" },
+    { id: 4, date: "TBA", time: "6:30 PM", location: "North Hagerstown High School, 1200 Pennsylvania Ave, Hagerstown, MD 21742", title: "Meet #4 — Season Finale", events: "All Events Championship Meet", status: "upcoming" },
   ],
   results: [
     { id: 1, season: "2025", meetName: "Meet #1 — Season Opener", date: "June 12, 2025", downloadUrl: "#", highlights: "Over 120 athletes participated!" },
@@ -58,7 +58,7 @@ const DEFAULT_DATA = {
   },
   infoBar: [
     { label: "All Ages Welcome", value: "Youth to Masters" },
-    { label: "Summer Series", value: "June \u2014 July 2026" },
+    { label: "Summer Series", value: "June — July 2026" },
     { label: "Location", value: "North Hagerstown High School" },
     { label: "501(c)(3) Nonprofit", value: "Cumberland Valley Athletic Club" },
   ],
@@ -66,8 +66,6 @@ const DEFAULT_DATA = {
   privacyPolicy:
     "Cumberland Valley Athletic Club is committed to protecting your privacy. We collect only the information necessary to communicate about our events. We do not sell or share personal information with third parties. Photos and videos taken at our events may be used for promotional purposes. Please see our photo/media release form for details regarding images of minors.",
 };
-
-const ADMIN_PASSWORD = "BOT2026";
 
 const colors = {
   orange: "#F5A123",
@@ -110,12 +108,23 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
-  // ─── Save data to API helper ───
+  // ─── Restore admin mode if session cookie is still valid ───
+  useEffect(() => {
+    fetch("/api/session", { credentials: "same-origin" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((info) => {
+        if (info && info.authenticated) setAdminMode(true);
+      })
+      .catch(() => {});
+  }, []);
+
+  // ─── Save data to API helper (admin session required) ───
   const persistData = (newData) => {
     fetch("/api/data", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: "BOT2026", data: newData }),
+      credentials: "same-origin",
+      body: JSON.stringify({ data: newData }),
     }).catch(() => {});
   };
 
@@ -384,15 +393,32 @@ export default function HomePage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleAdminLogin = () => {
-    if (adminPassword === ADMIN_PASSWORD) {
-      setAdminMode(true);
-      setShowAdminLogin(false);
-      setAdminPassword("");
-      setAdminPasswordError(false);
-    } else {
+  const handleAdminLogin = async () => {
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ password: adminPassword }),
+      });
+      if (res.ok) {
+        setAdminMode(true);
+        setShowAdminLogin(false);
+        setAdminPassword("");
+        setAdminPasswordError(false);
+      } else {
+        setAdminPasswordError(true);
+      }
+    } catch {
       setAdminPasswordError(true);
     }
+  };
+
+  const handleAdminLogout = async () => {
+    try {
+      await fetch("/api/logout", { method: "POST", credentials: "same-origin" });
+    } catch {}
+    setAdminMode(false);
   };
 
   const openEdit = (type, item = null) => {
@@ -521,7 +547,7 @@ export default function HomePage() {
         </div>
       </section>
 
-            {/* ── INFO BAR ─── */}
+      {/* ── INFO BAR ─── */}
       <div className="info-bar" style={{ position: "relative" }}>
         <div className="info-bar-inner">
           {(data.infoBar || []).map((item, i) => (
@@ -605,14 +631,14 @@ export default function HomePage() {
                     </div>
                   )}
                   {item.type === "flyer" && item.url && (
-                    <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "2rem", textAlign: "center", background: "#FFF8F0" }}>
-                      <FileText size={48} style={{ color: "#F5A123", marginBottom: "0.5rem" }} />
-                      <div style={{ fontWeight: 600, color: "#1A1A1A" }}>View Flyer</div>
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "2rem", textAlign: "center", background: colors.orangeLight }}>
+                      <FileText size={48} style={{ color: colors.orange, marginBottom: "0.5rem" }} />
+                      <div style={{ fontWeight: 600, color: colors.black }}>View Flyer</div>
                     </a>
                   )}
                   <div style={{ padding: "1rem" }}>
                     <h4 style={{ fontWeight: 700, marginBottom: "0.25rem" }}>{item.title || "Untitled"}</h4>
-                    {item.description && <p style={{ fontSize: "0.85rem", color: "#666" }}>{item.description}</p>}
+                    {item.description && <p style={{ fontSize: "0.85rem", color: colors.medGray }}>{item.description}</p>}
                     {adminMode && (
                       <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
                         <button className="btn-sm ghost" onClick={() => openEdit("media-edit", item)}><Edit3 size={12} /></button>
@@ -625,7 +651,7 @@ export default function HomePage() {
             </div>
 
             {(!data.media || data.media.length === 0) && adminMode && (
-              <p style={{ color: "#666", textAlign: "center", padding: "2rem" }}>No media yet. Click &quot;Add Video or Flyer&quot; to get started.</p>
+              <p style={{ color: colors.medGray, textAlign: "center", padding: "2rem" }}>No media yet. Click &quot;Add Video or Flyer&quot; to get started.</p>
             )}
           </div>
         </section>
@@ -961,7 +987,7 @@ export default function HomePage() {
           <div>
             <div style={{ borderRadius: 16, overflow: "hidden", height: "100%", minHeight: 300 }}>
               <iframe
-                title="North Hagerstown High School Map"
+                title="Meet Location Map"
                 src={`https://maps.google.com/maps?q=${encodeURIComponent(data.contact.address)}&t=m&z=15&output=embed`}
                 width="100%"
                 height="100%"
@@ -1026,7 +1052,7 @@ export default function HomePage() {
             <div className="admin-indicator"><div className="admin-dot" />Admin Mode Active</div>
             <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.8rem" }}>Click any section to edit. Changes are saved in-memory.</span>
           </div>
-          <button className="btn-sm primary" onClick={() => setAdminMode(false)} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+          <button className="btn-sm primary" onClick={handleAdminLogout} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
             <LogOut size={14} /> Exit Admin
           </button>
         </div>
@@ -1141,6 +1167,47 @@ export default function HomePage() {
                   </div>
                 ))}
                 <button type="button" className="btn-sm ghost" onClick={() => setEditData({ ...editData, items: [...(editData.items || []), { label: "", value: "" }] })} style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginTop: "0.5rem" }}><Plus size={14} /> Add Item</button>
+              </>
+            )}
+            {(editModal === "media-edit" || editModal === "media-add") && (
+              <>
+                <h3>{editModal === "media-add" ? "Add Video or Flyer" : "Edit Media"}</h3>
+                <div className="admin-field">
+                  <label>Type</label>
+                  <select value={editData.type || "video"} onChange={(e) => setEditData({ ...editData, type: e.target.value })}>
+                    <option value="video">YouTube Video</option>
+                    <option value="flyer">Flyer / PDF</option>
+                  </select>
+                </div>
+                <div className="admin-field"><label>Title</label><input value={editData.title || ""} onChange={(e) => setEditData({ ...editData, title: e.target.value })} placeholder="e.g., Season Promo Video" /></div>
+                <div className="admin-field"><label>Description (optional)</label><input value={editData.description || ""} onChange={(e) => setEditData({ ...editData, description: e.target.value })} /></div>
+                {editData.type === "flyer" ? (
+                  <div className="admin-field">
+                    <label>Flyer PDF</label>
+                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                      <input value={editData.url || ""} onChange={(e) => setEditData({ ...editData, url: e.target.value })} placeholder="URL will appear after upload" style={{ flex: 1 }} />
+                      <button type="button" className="btn-sm primary" onClick={() => {
+                        if (!window.cloudinary) { alert("Upload widget is still loading."); return; }
+                        const w = window.cloudinary.createUploadWidget({
+                          cloudName: CLOUD_NAME, uploadPreset: UPLOAD_PRESET,
+                          folder: "backontrack-flyers", sources: ["local"], multiple: false, maxFiles: 1,
+                          resourceType: "raw", clientAllowedFormats: ["pdf"],
+                          maxFileSize: 25000000,
+                          styles: { palette: { window: "#1A1A1A", windowBorder: "#F5A123", tabIcon: "#F5A123", menuIcons: "#F5A123", textDark: "#1A1A1A", textLight: "#FFFFFF", link: "#F5A123", action: "#F5A123", inactiveTabIcon: "#888", error: "#FF4444", inProgress: "#F5A123", complete: "#28A745", sourceBg: "#2A2A2A" } }
+                        }, (err, res) => {
+                          if (!err && res && res.event === "success") {
+                            setEditData((prev) => ({ ...prev, url: res.info.secure_url }));
+                          }
+                        });
+                        w.open();
+                      }} style={{ display: "flex", alignItems: "center", gap: "0.4rem", whiteSpace: "nowrap" }}>
+                        <Upload size={14} /> Upload PDF
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="admin-field"><label>YouTube URL</label><input value={editData.url || ""} onChange={(e) => setEditData({ ...editData, url: e.target.value })} placeholder="https://www.youtube.com/watch?v=..." /></div>
+                )}
               </>
             )}
             {editModal === "album-add" && (

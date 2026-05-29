@@ -1,9 +1,13 @@
 import { createClient } from "@vercel/kv";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { SESSION_COOKIE, verifySessionCookieValue } from "../../lib/session.js";
+
+export const runtime = "nodejs";
 
 const DATA_KEY = "backontrack_site_data";
+const MAX_BODY_BYTES = 200_000;
 
-// Create KV client — supports both STORAGE_ and KV_ prefixed env vars
 function getKV() {
   return createClient({
     url: process.env.STORAGE_REST_API_URL || process.env.KV_REST_API_URL,
@@ -11,7 +15,6 @@ function getKV() {
   });
 }
 
-// GET — load saved site data
 export async function GET() {
   try {
     const kv = getKV();
@@ -26,17 +29,48 @@ export async function GET() {
   }
 }
 
-// POST — save site data (admin only, password required)
 export async function POST(request) {
-  try {
-    const body = await request.json();
-    const { password, data } = body;
+  const cookie = cookies().get(SESSION_COOKIE);
+  if (!cookie || !verifySessionCookieValue(cookie.value)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    // Simple password check
-    if (password !== process.env.ADMIN_PASSWORD && password !== "BOT2026") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const origin = request.headers.get("origin");
+  const host = request.headers.get("host");
+  if (origin) {
+    try {
+      const originHost = new URL(origin).host;
+      if (host && originHost !== host) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } catch {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+  }
 
+  let raw;
+  try {
+    raw = await request.text();
+  } catch {
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  }
+  if (raw.length > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
+
+  let body;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const data = body && body.data;
+  if (!data || typeof data !== "object") {
+    return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+  }
+
+  try {
     const kv = getKV();
     await kv.set(DATA_KEY, data);
     return NextResponse.json({ success: true });
