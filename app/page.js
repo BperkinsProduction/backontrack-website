@@ -76,6 +76,58 @@ const colors = {
   lightGray: "#F5F5F5",
 };
 
+// Returns a sanitized youtube-nocookie embed URL, or null if the input is
+// not a recognizable YouTube link. Anything else (data:, javascript:,
+// arbitrary https:) is rejected, blocking XSS via iframe src.
+const YOUTUBE_ID_RE = /^[A-Za-z0-9_-]{11}$/;
+function youtubeEmbedFromUrl(input) {
+  if (typeof input !== "string") return null;
+  let url;
+  try {
+    url = new URL(input.trim());
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  const host = url.hostname.toLowerCase();
+  let id = null;
+  if (host === "youtu.be") {
+    id = url.pathname.slice(1).split("/")[0];
+  } else if (
+    host === "youtube.com" ||
+    host === "www.youtube.com" ||
+    host === "m.youtube.com" ||
+    host === "youtube-nocookie.com" ||
+    host === "www.youtube-nocookie.com"
+  ) {
+    if (url.pathname === "/watch") {
+      id = url.searchParams.get("v");
+    } else if (url.pathname.startsWith("/embed/")) {
+      id = url.pathname.slice("/embed/".length).split("/")[0];
+    } else if (url.pathname.startsWith("/shorts/")) {
+      id = url.pathname.slice("/shorts/".length).split("/")[0];
+    }
+  }
+  if (!id || !YOUTUBE_ID_RE.test(id)) return null;
+  return `https://www.youtube-nocookie.com/embed/${id}`;
+}
+
+// Restrict flyer URLs to this project's Cloudinary cloud so an admin
+// cannot point the "View Flyer" link at a phishing/malware host.
+const CLOUDINARY_FLYER_PREFIX = "https://res.cloudinary.com/dmvkf3ms8/";
+function safeFlyerUrl(input) {
+  if (typeof input !== "string") return null;
+  const trimmed = input.trim();
+  if (!trimmed.startsWith(CLOUDINARY_FLYER_PREFIX)) return null;
+  try {
+    const u = new URL(trimmed);
+    if (u.protocol !== "https:") return null;
+    return u.toString();
+  } catch {
+    return null;
+  }
+}
+
 export default function HomePage() {
   const [data, setData] = useState(DEFAULT_DATA);
   const [activeSection, setActiveSection] = useState("home");
@@ -92,6 +144,7 @@ export default function HomePage() {
   const [galleryFilter, setGalleryFilter] = useState("all");
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [galleryUploading, setGalleryUploading] = useState(false);
+  const [editError, setEditError] = useState("");
 
   // ─── Load saved data from API on mount ───
   useEffect(() => {
@@ -423,11 +476,25 @@ export default function HomePage() {
 
   const openEdit = (type, item = null) => {
     setEditData(item ? { ...item } : {});
+    setEditError("");
     setEditModal(type);
   };
 
   const saveEdit = () => {
     if (!editModal) return;
+    if (editModal === "media-edit" || editModal === "media-add") {
+      if (editData.type === "video") {
+        if (!youtubeEmbedFromUrl(editData.url)) {
+          setEditError("Please paste a valid YouTube URL (youtube.com/watch?v=… or youtu.be/…).");
+          return;
+        }
+      } else if (editData.type === "flyer") {
+        if (!safeFlyerUrl(editData.url)) {
+          setEditError("Flyer must be uploaded via the Upload PDF button.");
+          return;
+        }
+      }
+    }
     const newData = { ...data };
     if (editModal === "hero") newData.hero = { ...newData.hero, ...editData };
     else if (editModal === "about") newData.about = { ...newData.about, ...editData };
@@ -454,6 +521,7 @@ export default function HomePage() {
     persistData(newData);
     setEditModal(null);
     setEditData({});
+    setEditError("");
   };
 
   const deleteItem = (type, id) => {
@@ -619,23 +687,46 @@ export default function HomePage() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem" }}>
               {(data.media || []).map((item) => (
                 <div key={item.id} style={{ borderRadius: 12, overflow: "hidden", background: "white", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.06)" }}>
-                  {item.type === "video" && item.url && (
-                    <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
-                      <iframe
-                        src={item.url.includes("youtube.com/watch") ? item.url.replace("watch?v=", "embed/") : item.url.includes("youtu.be/") ? `https://www.youtube.com/embed/${item.url.split("youtu.be/")[1].split("?")[0]}` : item.url}
-                        title={item.title || "Video"}
-                        style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
-                        allowFullScreen
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
-                  {item.type === "flyer" && item.url && (
-                    <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "2rem", textAlign: "center", background: colors.orangeLight }}>
-                      <FileText size={48} style={{ color: colors.orange, marginBottom: "0.5rem" }} />
-                      <div style={{ fontWeight: 600, color: colors.black }}>View Flyer</div>
-                    </a>
-                  )}
+                  {item.type === "video" && (() => {
+                    const embed = youtubeEmbedFromUrl(item.url);
+                    if (!embed) {
+                      return (
+                        <div style={{ padding: "2rem", textAlign: "center", background: colors.lightGray, color: colors.medGray, fontSize: "0.85rem" }}>
+                          Video unavailable (invalid URL)
+                        </div>
+                      );
+                    }
+                    return (
+                      <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
+                        <iframe
+                          src={embed}
+                          title={item.title || "Video"}
+                          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
+                          allowFullScreen
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          sandbox="allow-scripts allow-same-origin allow-presentation"
+                          allow="encrypted-media; picture-in-picture; fullscreen"
+                        />
+                      </div>
+                    );
+                  })()}
+                  {item.type === "flyer" && (() => {
+                    const safe = safeFlyerUrl(item.url);
+                    if (!safe) {
+                      return (
+                        <div style={{ padding: "2rem", textAlign: "center", background: colors.lightGray, color: colors.medGray, fontSize: "0.85rem" }}>
+                          Flyer unavailable (invalid URL)
+                        </div>
+                      );
+                    }
+                    return (
+                      <a href={safe} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "2rem", textAlign: "center", background: colors.orangeLight }}>
+                        <FileText size={48} style={{ color: colors.orange, marginBottom: "0.5rem" }} />
+                        <div style={{ fontWeight: 600, color: colors.black }}>View Flyer</div>
+                      </a>
+                    );
+                  })()}
                   <div style={{ padding: "1rem" }}>
                     <h4 style={{ fontWeight: 700, marginBottom: "0.25rem" }}>{item.title || "Untitled"}</h4>
                     {item.description && <p style={{ fontSize: "0.85rem", color: colors.medGray }}>{item.description}</p>}
@@ -1074,7 +1165,7 @@ export default function HomePage() {
 
       {/* ── EDIT MODALS ─── */}
       {editModal && (
-        <div className="admin-modal" onClick={() => setEditModal(null)}>
+        <div className="admin-modal" onClick={() => { setEditModal(null); setEditError(""); }}>
           <div className="admin-modal-content" onClick={(e) => e.stopPropagation()}>
             {editModal === "hero" && (
               <>
@@ -1206,7 +1297,10 @@ export default function HomePage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="admin-field"><label>YouTube URL</label><input value={editData.url || ""} onChange={(e) => setEditData({ ...editData, url: e.target.value })} placeholder="https://www.youtube.com/watch?v=..." /></div>
+                  <div className="admin-field"><label>YouTube URL</label><input value={editData.url || ""} onChange={(e) => { setEditData({ ...editData, url: e.target.value }); setEditError(""); }} placeholder="https://www.youtube.com/watch?v=..." /></div>
+                )}
+                {editError && (
+                  <p style={{ color: "#f44336", fontSize: "0.85rem", marginBottom: "0.5rem" }}>{editError}</p>
                 )}
               </>
             )}
@@ -1219,7 +1313,7 @@ export default function HomePage() {
               </>
             )}
             <div className="admin-btn-row">
-              <button className="btn-sm ghost" onClick={() => setEditModal(null)}>Cancel</button>
+              <button className="btn-sm ghost" onClick={() => { setEditModal(null); setEditError(""); }}>Cancel</button>
               {editModal === "album-add" ? (
                 <button className="btn-sm primary" onClick={addAlbum} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}><FolderPlus size={14} /> Create Album</button>
               ) : (
