@@ -36,6 +36,8 @@ const cspDirectives = {
     "https://www.youtube-nocookie.com",
     "https://maps.google.com",
     "https://www.google.com",
+    "https://upload-widget.cloudinary.com",
+    "https://widget.cloudinary.com",
   ],
   "form-action": ["'self'", "https://formsubmit.co"],
   "frame-ancestors": ["'none'"],
