@@ -514,26 +514,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── INFO BAR ─── */}
-      <div className="info-bar">
+            {/* ── INFO BAR ─── */}
+      <div className="info-bar" style={{ position: "relative" }}>
         <div className="info-bar-inner">
-          <div className="info-item">
-            <span className="info-item-label">All Ages Welcome</span>
-            <span className="info-item-value">Youth to Masters</span>
-          </div>
-          <div className="info-item">
-            <span className="info-item-label">Summer Series</span>
-            <span className="info-item-value">June — July 2026</span>
-          </div>
-          <div className="info-item">
-            <span className="info-item-label">Location</span>
-            <span className="info-item-value">North Hagerstown High School</span>
-          </div>
-          <div className="info-item">
-            <span className="info-item-label">501(c)(3) Nonprofit</span>
-            <span className="info-item-value">Cumberland Valley Athletic Club</span>
-          </div>
+          {(data.infoBar || []).map((item, i) => (
+            <div className="info-item" key={i}>
+              <span className="info-item-label">{item.label}</span>
+              <span className="info-item-value">{item.value}</span>
+            </div>
+          ))}
         </div>
+        {adminMode && (
+          <button className="btn-sm primary" onClick={() => openEdit("infobar", { items: data.infoBar || [] })} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.7rem", padding: "0.3rem 0.7rem" }}>
+            <Edit3 size={12} /> Edit Bar
+          </button>
+        )}
       </div>
 
       {/* ── ABOUT ─── */}
