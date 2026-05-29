@@ -55,6 +55,12 @@ const DEFAULT_DATA = {
     facebook: "https://www.facebook.com/share/1AcREfrN7c/?mibextid=wwXIfr",
     instagram: "https://www.instagram.com/backontrackhgr?igsh=MTQ0c3F6bHZ3Ym81dQ==",
   },
+  infoBar: [
+    { label: "All Ages Welcome", value: "Youth to Masters" },
+    { label: "Summer Series", value: "June \u2014 July 2026" },
+    { label: "Location", value: "North Hagerstown High School" },
+    { label: "501(c)(3) Nonprofit", value: "Cumberland Valley Athletic Club" },
+  ],
   waiverUrl: "/Back-on-Track-Athlete-Waiver.pdf",
   privacyPolicy:
     "Cumberland Valley Athletic Club is committed to protecting your privacy. We collect only the information necessary to communicate about our events. We do not sell or share personal information with third parties. Photos and videos taken at our events may be used for promotional purposes. Please see our photo/media release form for details regarding images of minors.",
@@ -399,6 +405,7 @@ export default function HomePage() {
     if (editModal === "hero") newData.hero = { ...newData.hero, ...editData };
     else if (editModal === "about") newData.about = { ...newData.about, ...editData };
     else if (editModal === "contact") newData.contact = { ...newData.contact, ...editData };
+    else if (editModal === "infobar") newData.infoBar = editData.items;
     else if (editModal === "meet-edit") {
       newData.meets = newData.meets.map((m) => (m.id === editData.id ? editData : m));
     } else if (editModal === "meet-add") {
@@ -1063,6 +1070,20 @@ export default function HomePage() {
                 <div className="admin-field"><label>Address</label><input value={editData.address || ""} onChange={(e) => setEditData({ ...editData, address: e.target.value })} /></div>
                 <div className="admin-field"><label>Facebook URL</label><input value={editData.facebook || ""} onChange={(e) => setEditData({ ...editData, facebook: e.target.value })} /></div>
                 <div className="admin-field"><label>Instagram URL</label><input value={editData.instagram || ""} onChange={(e) => setEditData({ ...editData, instagram: e.target.value })} /></div>
+              </>
+            )}
+            {editModal === "infobar" && (
+              <>
+                <h3>Edit Info Bar</h3>
+                <p style={{ fontSize: "0.85rem", color: colors.medGray, marginBottom: "1rem" }}>Edit the orange info bar items shown below the hero section.</p>
+                {(editData.items || []).map((item, i) => (
+                  <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem", alignItems: "end" }}>
+                    <div className="admin-field" style={{ flex: 1, marginBottom: 0 }}><label>Label {i + 1}</label><input value={item.label} onChange={(e) => { const items = [...editData.items]; items[i] = { ...items[i], label: e.target.value }; setEditData({ ...editData, items }); }} /></div>
+                    <div className="admin-field" style={{ flex: 1, marginBottom: 0 }}><label>Value {i + 1}</label><input value={item.value} onChange={(e) => { const items = [...editData.items]; items[i] = { ...items[i], value: e.target.value }; setEditData({ ...editData, items }); }} /></div>
+                    <button type="button" className="btn-sm danger" style={{ padding: "0.4rem 0.6rem", marginBottom: "0.15rem" }} onClick={() => { const items = editData.items.filter((_, idx) => idx !== i); setEditData({ ...editData, items }); }}><Trash2 size={12} /></button>
+                  </div>
+                ))}
+                <button type="button" className="btn-sm ghost" onClick={() => setEditData({ ...editData, items: [...(editData.items || []), { label: "", value: "" }] })} style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginTop: "0.5rem" }}><Plus size={14} /> Add Item</button>
               </>
             )}
             {editModal === "album-add" && (
