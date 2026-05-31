@@ -866,7 +866,7 @@ export default function HomePage() {
             <FileText size={28} style={{ color: colors.orange, flexShrink: 0 }} />
             <p>
               <strong>Participant Waiver Required</strong>
-              All athletes must have a signed waiver form. Parents/guardians must sign for minors. Waivers are also available at each meet.
+              All athletes must have a signed waiver form. Parents/guardians must sign for minors. Please print, sign, and bring to your first meet. Waivers are also available at each meet.
             </p>
             <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexShrink: 0 }}>
               <a className="btn-primary" href={safeExternalUrl(data.waiverUrl) || "#"} target="_blank" rel="noopener noreferrer" style={{ padding: "0.6rem 1.5rem", fontSize: "0.8rem", whiteSpace: "nowrap" }}>
