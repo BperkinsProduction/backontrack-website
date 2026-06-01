@@ -958,10 +958,10 @@ h1, h2, h3, h4 {
   gap: 0.1rem;
 }
 .built-by-credit:hover { color: rgba(255,255,255,0.7); }
-.bp-credit-bp { font-weight: 900; color: rgba(255,255,255,0.6); letter-spacing: -0.02em; }
+.bp-credit-bp { font-weight: 900; color: #F5A123; font-size: 0.9rem; letter-spacing: 0.01em; text-shadow: 0 0 14px rgba(245,161,35,0.4); }
 .bp-credit-slash { font-weight: 200; color: #EF4444; font-size: 0.85rem; }
 .bp-credit-wd { font-weight: 300; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-left: 0.1rem; }
-.built-by-credit:hover .bp-credit-bp { color: rgba(255,255,255,0.9); }
+.built-by-credit:hover .bp-credit-bp { color: #FFB84D; text-shadow: 0 0 18px rgba(245,161,35,0.6); }
 .built-by-credit:hover .bp-credit-wd { color: rgba(255,255,255,0.6); }
 
 /* ── Waiver Banner ─── */
