@@ -1331,8 +1331,8 @@ export default function HomePage() {
         </div>
         <div className="footer-bottom">
           <span>&copy; {new Date().getFullYear()} {data.about.orgName}. All rights reserved.</span>
-          <a href="https://bperkins-wlr.github.io" target="_blank" rel="noopener noreferrer" className="built-by-credit">
-            Built by <span className="bp-credit-bp">BP</span><span className="bp-credit-slash">/</span><span className="bp-credit-wd">Web Design</span>
+          <a href="https://www.perkinsproduction.com" target="_blank" rel="noopener noreferrer" className="built-by-credit">
+            Built by <span className="bp-credit-bp">Perkins</span> <span className="bp-credit-wd">Production</span>
           </a>
           <span style={{ cursor: "pointer", transition: "color 0.2s" }} onClick={() => setShowAdminLogin(true)}>Admin</span>
         </div>
