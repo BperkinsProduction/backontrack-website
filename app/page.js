@@ -149,6 +149,24 @@ function safeFlyerUrl(input) {
   }
 }
 
+// Sponsor logos: allow a bundled local path (/...) or an image hosted in
+// this project's own Cloudinary cloud. Rejects arbitrary external URLs so an
+// admin can't point a logo <img> at an attacker-controlled host.
+function safeLogoUrl(input) {
+  if (typeof input !== "string") return null;
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return trimmed;
+  if (!trimmed.startsWith(CLOUDINARY_FLYER_PREFIX)) return null;
+  try {
+    const u = new URL(trimmed);
+    if (u.protocol !== "https:") return null;
+    return u.toString();
+  } catch {
+    return null;
+  }
+}
+
 export default function HomePage() {
   const [data, setData] = useState(DEFAULT_DATA);
   const [activeSection, setActiveSection] = useState("home");
@@ -496,6 +514,49 @@ export default function HomePage() {
             return updated;
           });
           alert("Waiver updated successfully!");
+        }
+      }
+    );
+    widget.open();
+  };
+
+  const openSponsorLogoUpload = () => {
+    if (!window.cloudinary) {
+      alert("Upload widget is still loading. Please try again in a moment.");
+      return;
+    }
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: CLOUD_NAME,
+        uploadPreset: UPLOAD_PRESET,
+        folder: "backontrack-sponsors",
+        sources: ["local"],
+        multiple: false,
+        maxFiles: 1,
+        resourceType: "image",
+        clientAllowedFormats: ["png", "jpg", "jpeg", "webp", "svg"],
+        maxFileSize: 5000000,
+        styles: {
+          palette: {
+            window: "#1A1A1A",
+            windowBorder: "#F5A123",
+            tabIcon: "#F5A123",
+            menuIcons: "#F5A123",
+            textDark: "#1A1A1A",
+            textLight: "#FFFFFF",
+            link: "#F5A123",
+            action: "#F5A123",
+            inactiveTabIcon: "#888",
+            error: "#FF4444",
+            inProgress: "#F5A123",
+            complete: "#28A745",
+            sourceBg: "#2A2A2A",
+          },
+        },
+      },
+      (error, result) => {
+        if (!error && result && result.event === "success") {
+          setEditData((prev) => ({ ...prev, logoUrl: result.info.secure_url }));
         }
       }
     );
@@ -1149,7 +1210,14 @@ export default function HomePage() {
               const sponsorUrl = safeExternalUrl(sponsor.website);
               const card = (
                 <div key={sponsor.id} className="sponsor-card" style={sponsorUrl ? { cursor: "pointer" } : {}}>
-                  <div className="sponsor-logo-placeholder"><Star size={24} /></div>
+                  <div className="sponsor-logo-placeholder">
+                    {safeLogoUrl(sponsor.logoUrl) ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={safeLogoUrl(sponsor.logoUrl)} alt={sponsor.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                    ) : (
+                      <Star size={24} />
+                    )}
+                  </div>
                   <div className="sponsor-name">{sponsor.name}</div>
                   <div className="sponsor-level">{sponsor.level} Sponsor</div>
                   {adminMode && (
@@ -1368,6 +1436,22 @@ export default function HomePage() {
                 <div className="admin-field"><label>Sponsor Name</label><input value={editData.name || ""} onChange={(e) => setEditData({ ...editData, name: e.target.value })} /></div>
                 <div className="admin-field"><label>Sponsorship Level</label><select value={editData.level || "Bronze"} onChange={(e) => setEditData({ ...editData, level: e.target.value })}><option value="Gold">Gold</option><option value="Silver">Silver</option><option value="Bronze">Bronze</option></select></div>
                 <div className="admin-field"><label>Website URL</label><input value={editData.website || ""} onChange={(e) => setEditData({ ...editData, website: e.target.value })} placeholder="https://..." /></div>
+                <div className="admin-field">
+                  <label>Sponsor Logo</label>
+                  <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                    {editData.logoUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={editData.logoUrl} alt="Logo preview" style={{ width: 56, height: 56, objectFit: "contain", background: colors.lightGray, borderRadius: 6, padding: 4, flexShrink: 0 }} />
+                    ) : null}
+                    <button type="button" className="btn-sm primary" onClick={openSponsorLogoUpload} style={{ display: "flex", alignItems: "center", gap: "0.4rem", whiteSpace: "nowrap" }}>
+                      <Upload size={14} /> {editData.logoUrl ? "Replace Logo" : "Upload Logo"}
+                    </button>
+                    {editData.logoUrl && (
+                      <button type="button" className="btn-sm ghost" onClick={() => setEditData({ ...editData, logoUrl: "" })}>Remove</button>
+                    )}
+                  </div>
+                  <p style={{ fontSize: "0.75rem", color: colors.medGray, marginTop: "0.4rem" }}>PNG with a transparent background works best. Max 5 MB.</p>
+                </div>
               </>
             )}
             {editModal === "contact" && (
