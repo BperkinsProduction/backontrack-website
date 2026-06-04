@@ -26,7 +26,7 @@ const DEFAULT_DATA = {
     director: "Laura Salvatore",
     directorTitle: "Meet Director",
     nonprofit:
-      "Cumberland Valley Athletic Club (operating under the Road Runners Club of America) is a registered 501(c)(3) public charity focused on running and amateur sports, founded in 1976. Located at 1012 Valleybrook Dr, Hagerstown, MD 21742. All donations are tax-deductible to the extent allowed by law.",
+      "Cumberland Valley Athletic Club is a registered 501(c)(3) public charity focused on running and amateur sports, founded in 1960. Located at 1012 Valleybrook Dr, Hagerstown, MD 21742. All donations are tax-deductible to the extent allowed by law.",
     ein: "EIN: 52-1867770",
   },
   meets: [
@@ -147,6 +147,22 @@ function safeFlyerUrl(input) {
   } catch {
     return null;
   }
+}
+
+// If a flyer can be shown as an image, return the image URL; otherwise null
+// (caller falls back to a download link). Handles direct image uploads and
+// PDFs stored as Cloudinary image resources (rendered as their first page).
+function flyerImageSrc(input) {
+  const safe = safeFlyerUrl(input);
+  if (!safe) return null;
+  if (/\.(jpe?g|png|webp|gif|avif)(\?|$)/i.test(safe)) return safe;
+  if (safe.includes("/image/upload/") && /\.pdf(\?|$)/i.test(safe)) {
+    return safe.replace(
+      "/image/upload/",
+      "/image/upload/pg_1,f_jpg,q_auto,w_900/"
+    );
+  }
+  return null;
 }
 
 // Sponsor logos: allow a bundled local path (/...) or an image hosted in
@@ -658,7 +674,7 @@ export default function HomePage() {
         }
       } else if (editData.type === "flyer") {
         if (!safeFlyerUrl(editData.url)) {
-          setEditError("Flyer must be uploaded via the Upload PDF button.");
+          setEditError("Flyer must be uploaded via the Upload Flyer button.");
           return;
         }
       }
@@ -886,6 +902,15 @@ export default function HomePage() {
                         <div style={{ padding: "2rem", textAlign: "center", background: colors.lightGray, color: colors.medGray, fontSize: "0.85rem" }}>
                           Flyer unavailable (invalid URL)
                         </div>
+                      );
+                    }
+                    const imgSrc = flyerImageSrc(item.url);
+                    if (imgSrc) {
+                      return (
+                        <a href={safe} target="_blank" rel="noopener noreferrer" style={{ display: "block" }} title="Open full flyer">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={imgSrc} alt={item.title || "Flyer"} style={{ width: "100%", display: "block" }} loading="lazy" />
+                        </a>
                       );
                     }
                     return (
@@ -1386,6 +1411,7 @@ export default function HomePage() {
                 <div className="admin-field"><label>Mission Statement</label><textarea value={editData.mission || ""} onChange={(e) => setEditData({ ...editData, mission: e.target.value })} style={{ minHeight: 150 }} /></div>
                 <div className="admin-field"><label>Director Name</label><input value={editData.director || ""} onChange={(e) => setEditData({ ...editData, director: e.target.value })} /></div>
                 <div className="admin-field"><label>EIN</label><input value={editData.ein || ""} onChange={(e) => setEditData({ ...editData, ein: e.target.value })} /></div>
+                <div className="admin-field"><label>Nonprofit / Legal Statement</label><textarea value={editData.nonprofit || ""} onChange={(e) => setEditData({ ...editData, nonprofit: e.target.value })} style={{ minHeight: 120 }} /></div>
               </>
             )}
             {(editModal === "meet-edit" || editModal === "meet-add") && (
@@ -1492,7 +1518,7 @@ export default function HomePage() {
                 <div className="admin-field"><label>Description (optional)</label><input value={editData.description || ""} onChange={(e) => setEditData({ ...editData, description: e.target.value })} /></div>
                 {editData.type === "flyer" ? (
                   <div className="admin-field">
-                    <label>Flyer PDF</label>
+                    <label>Flyer Image or PDF</label>
                     <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                       <input value={editData.url || ""} onChange={(e) => setEditData({ ...editData, url: e.target.value })} placeholder="URL will appear after upload" style={{ flex: 1 }} />
                       <button type="button" className="btn-sm primary" onClick={() => {
@@ -1500,7 +1526,7 @@ export default function HomePage() {
                         const w = window.cloudinary.createUploadWidget({
                           cloudName: CLOUD_NAME, uploadPreset: UPLOAD_PRESET,
                           folder: "backontrack-flyers", sources: ["local"], multiple: false, maxFiles: 1,
-                          resourceType: "raw", clientAllowedFormats: ["pdf"],
+                          resourceType: "auto", clientAllowedFormats: ["jpg", "jpeg", "png", "webp", "pdf"],
                           maxFileSize: 25000000,
                           styles: { palette: { window: "#1A1A1A", windowBorder: "#F5A123", tabIcon: "#F5A123", menuIcons: "#F5A123", textDark: "#1A1A1A", textLight: "#FFFFFF", link: "#F5A123", action: "#F5A123", inactiveTabIcon: "#888", error: "#FF4444", inProgress: "#F5A123", complete: "#28A745", sourceBg: "#2A2A2A" } }
                         }, (err, res) => {
@@ -1510,7 +1536,7 @@ export default function HomePage() {
                         });
                         w.open();
                       }} style={{ display: "flex", alignItems: "center", gap: "0.4rem", whiteSpace: "nowrap" }}>
-                        <Upload size={14} /> Upload PDF
+                        <Upload size={14} /> Upload Flyer
                       </button>
                     </div>
                   </div>
