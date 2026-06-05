@@ -49,6 +49,7 @@ const DEFAULT_DATA = {
   media: [],
   albums: [],
   gallery: [],
+  removedPhotos: [],
   contact: {
     email: "backontrackhgr@gmail.com",
     phone: "(301) 555-0100",
@@ -362,7 +363,8 @@ export default function HomePage() {
           if (images.length > 0) {
             setData((prev) => {
               const existing = new Set(prev.gallery.map((g) => g.id));
-              const fresh = images.filter((img) => !existing.has(img.id));
+              const removed = new Set(prev.removedPhotos || []);
+              const fresh = images.filter((img) => !existing.has(img.id) && !removed.has(img.id));
               return fresh.length > 0
                 ? { ...prev, gallery: [...prev.gallery, ...fresh] }
                 : prev;
@@ -398,7 +400,8 @@ export default function HomePage() {
             if (images.length > 0) {
               setData((prev) => {
                 const existing = new Set(prev.gallery.map((g) => g.id));
-                const fresh = images.filter((img) => !existing.has(img.id));
+                const removed = new Set(prev.removedPhotos || []);
+                const fresh = images.filter((img) => !existing.has(img.id) && !removed.has(img.id));
                 return fresh.length > 0
                   ? { ...prev, gallery: [...prev.gallery, ...fresh] }
                   : prev;
@@ -579,11 +582,16 @@ export default function HomePage() {
     widget.open();
   };
 
-  const deleteGalleryImage = async (publicId) => {
-    setData((prev) => ({
-      ...prev,
-      gallery: prev.gallery.filter((g) => g.id !== publicId),
-    }));
+  const deleteGalleryImage = (publicId) => {
+    setData((prev) => {
+      const updated = {
+        ...prev,
+        gallery: prev.gallery.filter((g) => g.id !== publicId),
+        removedPhotos: Array.from(new Set([...(prev.removedPhotos || []), publicId])),
+      };
+      persistData(updated);
+      return updated;
+    });
   };
 
   const addAlbum = () => {
@@ -598,20 +606,27 @@ export default function HomePage() {
       date: displayDate,
       coverUrl: "",
     };
-    setData((prev) => ({
-      ...prev,
-      albums: [...prev.albums, newAlbum],
-    }));
+    setData((prev) => {
+      const updated = { ...prev, albums: [...prev.albums, newAlbum] };
+      persistData(updated);
+      return updated;
+    });
     setEditModal(null);
     setEditData({});
   };
 
   const deleteAlbum = (albumId) => {
-    setData((prev) => ({
-      ...prev,
-      albums: prev.albums.filter((a) => a.id !== albumId),
-      gallery: prev.gallery.filter((g) => g.albumId !== albumId),
-    }));
+    setData((prev) => {
+      const removedIds = prev.gallery.filter((g) => g.albumId === albumId).map((g) => g.id);
+      const updated = {
+        ...prev,
+        albums: prev.albums.filter((a) => a.id !== albumId),
+        gallery: prev.gallery.filter((g) => g.albumId !== albumId),
+        removedPhotos: Array.from(new Set([...(prev.removedPhotos || []), ...removedIds])),
+      };
+      persistData(updated);
+      return updated;
+    });
   };
 
   useEffect(() => {
@@ -1079,7 +1094,7 @@ export default function HomePage() {
           <>
             {/* ── Albums as scrolling sections ── */}
             {data.albums.map((album) => {
-              const albumPhotos = data.gallery.filter((g) => g.albumId === album.id);
+              const albumPhotos = data.gallery.filter((g) => g.albumId === album.id && !(data.removedPhotos || []).includes(g.id));
               return (
                 <div key={album.id} className="album-section">
                   <div className="album-header">
@@ -1135,7 +1150,7 @@ export default function HomePage() {
             })}
 
             {/* ── General / untagged photos ── */}
-            {data.gallery.filter((g) => g.albumId === "general").length > 0 && (
+            {data.gallery.filter((g) => g.albumId === "general" && !(data.removedPhotos || []).includes(g.id)).length > 0 && (
               <div className="album-section">
                 <div className="album-header">
                   <div className="album-cover-placeholder">
@@ -1143,7 +1158,7 @@ export default function HomePage() {
                   </div>
                   <div className="album-info">
                     <h3 className="album-name">General Photos</h3>
-                    <div className="album-count">{data.gallery.filter((g) => g.albumId === "general").length} photo{data.gallery.filter((g) => g.albumId === "general").length !== 1 ? "s" : ""}</div>
+                    <div className="album-count">{data.gallery.filter((g) => g.albumId === "general" && !(data.removedPhotos || []).includes(g.id)).length} photo{data.gallery.filter((g) => g.albumId === "general" && !(data.removedPhotos || []).includes(g.id)).length !== 1 ? "s" : ""}</div>
                   </div>
                   {adminMode && (
                     <div className="album-admin-actions">
@@ -1157,7 +1172,7 @@ export default function HomePage() {
                   )}
                 </div>
                 <div className="gallery-grid">
-                  {data.gallery.filter((g) => g.albumId === "general").map((item) => (
+                  {data.gallery.filter((g) => g.albumId === "general" && !(data.removedPhotos || []).includes(g.id)).map((item) => (
                     <div key={item.id} className="gallery-item">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={item.imageUrl} alt={item.caption || "Gallery photo"} className="gallery-img" loading="lazy" />
