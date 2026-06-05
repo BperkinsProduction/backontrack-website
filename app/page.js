@@ -848,7 +848,7 @@ export default function HomePage() {
 
         <div style={{ marginTop: "2.5rem", padding: "1.5rem", borderRadius: 12, border: `2px solid ${colors.orange}`, background: colors.orangeLight }}>
           <p style={{ fontWeight: 400, fontSize: "0.9rem" }}>
-            <strong style={{ fontWeight: 700 }}>{data.about.orgName}</strong> — {data.about.nonprofit}
+            <strong style={{ fontWeight: 700 }}>Cumberland Valley Athletic Club</strong> is a registered 501(c)(3) public charity focused on running and amateur sports, founded in 1960. Located at 1012 Valleybrook Dr, Hagerstown, MD 21742. All donations are tax-deductible to the extent allowed by law.
             <br /><span style={{ color: colors.medGray }}>{data.about.ein}</span>
           </p>
         </div>
@@ -1411,7 +1411,6 @@ export default function HomePage() {
                 <div className="admin-field"><label>Mission Statement</label><textarea value={editData.mission || ""} onChange={(e) => setEditData({ ...editData, mission: e.target.value })} style={{ minHeight: 150 }} /></div>
                 <div className="admin-field"><label>Director Name</label><input value={editData.director || ""} onChange={(e) => setEditData({ ...editData, director: e.target.value })} /></div>
                 <div className="admin-field"><label>EIN</label><input value={editData.ein || ""} onChange={(e) => setEditData({ ...editData, ein: e.target.value })} /></div>
-                <div className="admin-field"><label>Nonprofit / Legal Statement</label><textarea value={editData.nonprofit || ""} onChange={(e) => setEditData({ ...editData, nonprofit: e.target.value })} style={{ minHeight: 120 }} /></div>
               </>
             )}
             {(editModal === "meet-edit" || editModal === "meet-add") && (
