@@ -31,6 +31,11 @@ const cspDirectives = {
     "https://widget.cloudinary.com",
     "https://formsubmit.co",
   ],
+  "media-src": [
+    "'self'",
+    "https://res.cloudinary.com",
+    "blob:",
+  ],
   "frame-src": [
     "https://www.youtube.com",
     "https://www.youtube-nocookie.com",

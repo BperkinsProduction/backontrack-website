@@ -166,6 +166,18 @@ function flyerImageSrc(input) {
   return null;
 }
 
+// Build a browser-friendly video URL from a Cloudinary video upload. iPhone
+// clips are usually .mov/HEVC which most browsers can't play, so we force an
+// mp4 (H.264) transcode and auto quality. Returns null for anything that is
+// not a video in this project's own Cloudinary cloud.
+function cloudinaryVideoSrc(input) {
+  const safe = safeFlyerUrl(input);
+  if (!safe || !safe.includes("/video/upload/")) return null;
+  return safe
+    .replace("/video/upload/", "/video/upload/q_auto/")
+    .replace(/\.[a-z0-9]+$/i, ".mp4");
+}
+
 // Sponsor logos: allow a bundled local path (/...) or an image hosted in
 // this project's own Cloudinary cloud. Rejects arbitrary external URLs so an
 // admin can't point a logo <img> at an attacker-controlled host.
@@ -692,6 +704,11 @@ export default function HomePage() {
           setEditError("Flyer must be uploaded via the Upload Flyer button.");
           return;
         }
+      } else if (editData.type === "videofile") {
+        if (!cloudinaryVideoSrc(editData.url)) {
+          setEditError("Please upload a video using the Upload Video button.");
+          return;
+        }
       }
     }
     const newData = { ...data };
@@ -907,6 +924,29 @@ export default function HomePage() {
                           sandbox="allow-scripts allow-same-origin allow-presentation"
                           allow="encrypted-media; picture-in-picture; fullscreen"
                         />
+                      </div>
+                    );
+                  })()}
+                  {item.type === "videofile" && (() => {
+                    const src = cloudinaryVideoSrc(item.url);
+                    if (!src) {
+                      return (
+                        <div style={{ padding: "2rem", textAlign: "center", background: colors.lightGray, color: colors.medGray, fontSize: "0.85rem" }}>
+                          Video unavailable (invalid file)
+                        </div>
+                      );
+                    }
+                    return (
+                      <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, background: "#000" }}>
+                        <video
+                          controls
+                          playsInline
+                          preload="metadata"
+                          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                        >
+                          <source src={src} type="video/mp4" />
+                          Your browser does not support video playback.
+                        </video>
                       </div>
                     );
                   })()}
@@ -1525,6 +1565,7 @@ export default function HomePage() {
                   <label>Type</label>
                   <select value={editData.type || "video"} onChange={(e) => setEditData({ ...editData, type: e.target.value })}>
                     <option value="video">YouTube Video</option>
+                    <option value="videofile">Upload Video (from phone/computer)</option>
                     <option value="flyer">Flyer / PDF</option>
                   </select>
                 </div>
@@ -1553,6 +1594,32 @@ export default function HomePage() {
                         <Upload size={14} /> Upload Flyer
                       </button>
                     </div>
+                  </div>
+                ) : editData.type === "videofile" ? (
+                  <div className="admin-field">
+                    <label>Video File</label>
+                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                      <input value={editData.url || ""} onChange={(e) => setEditData({ ...editData, url: e.target.value })} placeholder="URL will appear after upload" style={{ flex: 1 }} />
+                      <button type="button" className="btn-sm primary" onClick={() => {
+                        if (!window.cloudinary) { alert("Upload widget is still loading."); return; }
+                        const w = window.cloudinary.createUploadWidget({
+                          cloudName: CLOUD_NAME, uploadPreset: UPLOAD_PRESET,
+                          folder: "backontrack-videos", sources: ["local", "camera"], multiple: false, maxFiles: 1,
+                          resourceType: "video", clientAllowedFormats: ["mp4", "mov", "m4v", "webm", "avi", "3gp", "hevc"],
+                          maxFileSize: 100000000,
+                          styles: { palette: { window: "#1A1A1A", windowBorder: "#F5A123", tabIcon: "#F5A123", menuIcons: "#F5A123", textDark: "#1A1A1A", textLight: "#FFFFFF", link: "#F5A123", action: "#F5A123", inactiveTabIcon: "#888", error: "#FF4444", inProgress: "#F5A123", complete: "#28A745", sourceBg: "#2A2A2A" } }
+                        }, (err, res) => {
+                          if (!err && res && res.event === "success") {
+                            setEditData((prev) => ({ ...prev, url: res.info.secure_url }));
+                            setEditError("");
+                          }
+                        });
+                        w.open();
+                      }} style={{ display: "flex", alignItems: "center", gap: "0.4rem", whiteSpace: "nowrap" }}>
+                        <Upload size={14} /> Upload Video
+                      </button>
+                    </div>
+                    <p style={{ fontSize: "0.75rem", color: colors.medGray, marginTop: "0.4rem" }}>Upload straight from your phone or computer. Max 100 MB (about 2-3 min of phone video). Longer clips: trim first or use YouTube.</p>
                   </div>
                 ) : (
                   <div className="admin-field"><label>YouTube URL</label><input value={editData.url || ""} onChange={(e) => { setEditData({ ...editData, url: e.target.value }); setEditError(""); }} placeholder="https://www.youtube.com/watch?v=..." /></div>
