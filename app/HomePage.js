@@ -990,7 +990,7 @@ export default function HomePage({ initialData }) {
         <div className="section-inner">
           <div className="section-subtitle">2026 Season</div>
           <h2 className="section-title">Upcoming Meets</h2>
-          <p className="section-desc">Dates will be announced soon for this summer&apos;s All-Comers Track & Field Series. All meets are free to attend for students. All other participants: $5 per event. Open to athletes of every age and ability.</p>
+          <p className="section-desc">Join us this summer for the All-Comers Track & Field Series at North Hagerstown High School. All meets are free to attend for students. All other participants: $5 per event. Open to athletes of every age and ability.</p>
 
           <div className="waiver-banner">
             <FileText size={28} style={{ color: colors.orange, flexShrink: 0 }} />
