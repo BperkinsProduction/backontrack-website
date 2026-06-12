@@ -208,7 +208,7 @@ export default function HomePage({ initialData }) {
   const [editModal, setEditModal] = useState(null);
   const [editData, setEditData] = useState({});
   const [showPrivacy, setShowPrivacy] = useState(false);
-  const [newsletterSent, setNewsletterSent] = useState(false);
+  const [newsletterStatus, setNewsletterStatus] = useState("idle"); // idle | sending | sent | error
   const [selectedResultSeason, setSelectedResultSeason] = useState("2026");
   const [galleryFilter, setGalleryFilter] = useState("all");
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -1232,32 +1232,55 @@ export default function HomePage({ initialData }) {
         <p style={{ fontWeight: 400, fontSize: "1rem", maxWidth: 500, margin: "0 auto 1.5rem", opacity: 0.85 }}>
           Get meet schedules, results, and community updates delivered to your inbox.
         </p>
-        {newsletterSent ? (
+        {newsletterStatus === "sent" ? (
           <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.5rem", padding: "1rem", background: "rgba(0,0,0,0.1)", borderRadius: 12, maxWidth: 450, margin: "0 auto" }}>
             <CheckCircle size={22} />
             <span style={{ fontWeight: 700 }}>You&apos;re signed up! We&apos;ll be in touch.</span>
           </div>
         ) : (
-          <form
-            action="https://formsubmit.co/backontrackhgr@gmail.com"
-            method="POST"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const form = e.target;
-              fetch(form.action, { method: "POST", body: new FormData(form) })
-                .then(() => setNewsletterSent(true))
-                .catch(() => setNewsletterSent(true));
-            }}
-            style={{ display: "flex", justifyContent: "center" }}
-          >
-            <input type="hidden" name="_subject" value="New Back on Track Newsletter Signup" />
-            <input type="hidden" name="_captcha" value="false" />
-            <input type="hidden" name="_template" value="table" />
-            <div className="newsletter-form" style={{ maxWidth: 450 }}>
-              <input type="email" name="email" placeholder="Your email address" required style={{ borderColor: "rgba(0,0,0,0.15)" }} />
-              <button type="submit" className="btn-primary" style={{ background: colors.black, color: "white", boxShadow: "none" }}>Subscribe</button>
-            </div>
-          </form>
+          <>
+            <form
+              action="https://formsubmit.co/ajax/backontrackhgr@gmail.com"
+              method="POST"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                setNewsletterStatus("sending");
+                try {
+                  const res = await fetch(form.action, {
+                    method: "POST",
+                    body: new FormData(form),
+                    headers: { Accept: "application/json" },
+                  });
+                  const json = await res.json().catch(() => null);
+                  if (res.ok && json && String(json.success) === "true") {
+                    setNewsletterStatus("sent");
+                  } else {
+                    setNewsletterStatus("error");
+                  }
+                } catch {
+                  setNewsletterStatus("error");
+                }
+              }}
+              style={{ display: "flex", justifyContent: "center" }}
+            >
+              <input type="hidden" name="_subject" value="New Back on Track Newsletter Signup" />
+              <input type="hidden" name="_captcha" value="false" />
+              <input type="hidden" name="_template" value="table" />
+              <input type="text" name="_honey" tabIndex={-1} autoComplete="off" style={{ display: "none" }} aria-hidden="true" />
+              <div className="newsletter-form" style={{ maxWidth: 450 }}>
+                <input type="email" name="email" placeholder="Your email address" required style={{ borderColor: "rgba(0,0,0,0.15)" }} />
+                <button type="submit" className="btn-primary" disabled={newsletterStatus === "sending"} style={{ background: colors.black, color: "white", boxShadow: "none", opacity: newsletterStatus === "sending" ? 0.7 : 1 }}>
+                  {newsletterStatus === "sending" ? "Subscribing..." : "Subscribe"}
+                </button>
+              </div>
+            </form>
+            {newsletterStatus === "error" && (
+              <p style={{ marginTop: "0.75rem", fontWeight: 700, fontSize: "0.9rem" }}>
+                Something went wrong and your signup did not go through. Please try again, or email us at {data.contact.email}.
+              </p>
+            )}
+          </>
         )}
       </div>
 
