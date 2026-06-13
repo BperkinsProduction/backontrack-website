@@ -1,15 +1,25 @@
 import './globals.css';
 
 export const metadata = {
+  metadataBase: new URL('https://www.backontrackmeets.com'),
   title: 'Back on Track | Pete Wright Memorial Summer All-Comers Track & Field Series',
-  description: 'Over 20 years of keeping kids and families healthy through community track & field in Hagerstown, MD. A program of Cumberland Valley Athletic Club, a 501(c)(3) nonprofit.',
+  description: 'Summer all-comers track & field meets in Hagerstown, MD, for athletes of every age and ability. Free for students. A program of Cumberland Valley Athletic Club, a 501(c)(3) nonprofit.',
   keywords: 'track meet, all-comers, Hagerstown, Maryland, track and field, youth sports, nonprofit, Cumberland Valley Athletic Club, Back on Track',
+  alternates: {
+    canonical: 'https://www.backontrackmeets.com',
+  },
   openGraph: {
-    title: 'Back on Track | All-Comers Track & Field Series',
-    description: 'Over 20 years of community track & field for all ages in the tri-state region.',
+    title: 'Back on Track | Summer All-Comers Track & Field Series',
+    description: 'Summer all-comers track & field meets in Hagerstown, MD, for all ages and abilities. Free for students.',
+    url: 'https://www.backontrackmeets.com',
     type: 'website',
     locale: 'en_US',
     siteName: 'Back on Track Meets',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Back on Track | Summer All-Comers Track & Field Series',
+    description: 'Summer all-comers track & field meets in Hagerstown, MD, for all ages and abilities. Free for students.',
   },
 };
 
