@@ -1208,9 +1208,9 @@ export default function HomePage({ initialData }) {
               return (
                 <div key={album.id} className="album-section">
                   <div className="album-header">
-                    {album.coverUrl ? (
+                    {album.coverUrl || albumPhotos[0] ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={album.coverUrl} alt={album.name} className="album-cover" />
+                      <img src={album.coverUrl || albumPhotos[0].imageUrl} alt={album.name} className="album-cover" />
                     ) : (
                       <div className="album-cover-placeholder">
                         <Camera size={32} />
@@ -1260,15 +1260,17 @@ export default function HomePage({ initialData }) {
             })}
 
             {/* ── General / untagged photos ── */}
-            {data.gallery.filter((g) => g.albumId === "general" && !(data.removedPhotos || []).includes(g.id)).length > 0 && (
+            {(() => {
+              const generalPhotos = data.gallery.filter((g) => g.albumId === "general" && !(data.removedPhotos || []).includes(g.id));
+              if (generalPhotos.length === 0) return null;
+              return (
               <div className="album-section">
                 <div className="album-header">
-                  <div className="album-cover-placeholder">
-                    <Camera size={32} />
-                  </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={generalPhotos[0].imageUrl} alt="General Photos" className="album-cover" />
                   <div className="album-info">
                     <h3 className="album-name">General Photos</h3>
-                    <div className="album-count">{data.gallery.filter((g) => g.albumId === "general" && !(data.removedPhotos || []).includes(g.id)).length} photo{data.gallery.filter((g) => g.albumId === "general" && !(data.removedPhotos || []).includes(g.id)).length !== 1 ? "s" : ""}</div>
+                    <div className="album-count">{generalPhotos.length} photo{generalPhotos.length !== 1 ? "s" : ""}</div>
                   </div>
                   {adminMode && (
                     <div className="album-admin-actions">
@@ -1282,7 +1284,7 @@ export default function HomePage({ initialData }) {
                   )}
                 </div>
                 <div className="gallery-grid">
-                  {data.gallery.filter((g) => g.albumId === "general" && !(data.removedPhotos || []).includes(g.id)).map((item) => (
+                  {generalPhotos.map((item) => (
                     <div key={item.id} className="gallery-item">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={item.imageUrl} alt={item.caption || "Gallery photo"} className="gallery-img" loading="lazy" />
@@ -1296,7 +1298,8 @@ export default function HomePage({ initialData }) {
                   ))}
                 </div>
               </div>
-            )}
+              );
+            })()}
           </>
         )}
 
