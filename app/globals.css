@@ -21,7 +21,9 @@
   --white: #FFFFFF;
 }
 
-html { scroll-behavior: smooth; }
+/* scroll-padding-top keeps section headings clear of the fixed nav bar
+   when navigating via the menu or anchor links (~56px nav + breathing room) */
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 
 body {
   font-family: 'Raleway', sans-serif;
