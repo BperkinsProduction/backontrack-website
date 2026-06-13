@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,200;0,400;0,700;0,900;1,900&display=swap');
+/* Raleway is loaded via a non-blocking <link> in app/layout.js (with
+   preconnect) instead of a render-blocking @import here. */
 
 @font-face {
   font-family: 'Raleway Brand';
@@ -9,6 +10,19 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* Visually hidden but available to screen readers and search engines */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 :root {
   --orange: #F5A123;

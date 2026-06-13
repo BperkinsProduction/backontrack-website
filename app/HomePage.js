@@ -180,6 +180,67 @@ function cloudinaryVideoSrc(input) {
 }
 
 // Sponsor logos: allow a bundled local path (/...) or an image hosted in
+// Parse a human meet date like "June 30th 2026" into an ISO date for
+// schema.org structured data. Returns undefined if it can't be parsed.
+function toISODate(input) {
+  if (!input) return undefined;
+  const cleaned = String(input).replace(/(\d+)(st|nd|rd|th)/i, "$1");
+  const d = new Date(cleaned);
+  if (isNaN(d.getTime())) return undefined;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// Build schema.org JSON-LD so Google can show the organization and each
+// meet as a rich result (helps "track meets near Hagerstown" searches).
+function buildStructuredData(d) {
+  const venue = {
+    "@type": "Place",
+    name: "North Hagerstown High School",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "1200 Pennsylvania Ave",
+      addressLocality: "Hagerstown",
+      addressRegion: "MD",
+      postalCode: "21742",
+      addressCountry: "US",
+    },
+  };
+  const organizer = {
+    "@type": "SportsOrganization",
+    name: "Cumberland Valley Athletic Club",
+    url: "https://www.backontrackmeets.com",
+  };
+  const events = (d.meets || [])
+    .map((m) => {
+      const start = toISODate(m.date);
+      const ev = {
+        "@type": "SportsEvent",
+        name: `${m.title} - Back on Track`,
+        sport: "Track and field",
+        eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+        location: venue,
+        organizer,
+      };
+      if (start) ev.startDate = start;
+      return ev;
+    });
+  return {
+    "@context": "https://schema.org",
+    "@type": "SportsOrganization",
+    name: "Back on Track - Pete Wright Memorial Summer All-Comers Track & Field Series",
+    alternateName: "Cumberland Valley Athletic Club",
+    url: "https://www.backontrackmeets.com",
+    description:
+      "Summer all-comers track & field meets in Hagerstown, MD, for athletes of every age and ability. Free for students.",
+    sport: "Track and field",
+    location: venue,
+    event: events,
+  };
+}
+
 // this project's own Cloudinary cloud. Rejects arbitrary external URLs so an
 // admin can't point a logo <img> at an attacker-controlled host.
 function safeLogoUrl(input) {
@@ -234,6 +295,20 @@ export default function HomePage({ initialData }) {
       })
       .catch(() => {});
   }, []);
+
+  // ─── Load the Cloudinary upload widget only for admins ───
+  // Regular visitors never download this script, which keeps the public
+  // site lighter; it is only needed for in-admin uploads.
+  useEffect(() => {
+    if (!adminMode) return;
+    if (typeof window === "undefined" || window.cloudinary) return;
+    if (document.getElementById("cloudinary-widget-script")) return;
+    const s = document.createElement("script");
+    s.id = "cloudinary-widget-script";
+    s.src = "https://upload-widget.cloudinary.com/latest/global/all.js";
+    s.async = true;
+    document.body.appendChild(s);
+  }, [adminMode]);
 
   // ─── Save data to API helper (admin session required) ───
   const persistData = (newData) => {
@@ -757,6 +832,10 @@ export default function HomePage({ initialData }) {
 
   return (
     <div style={{ paddingBottom: adminMode ? 56 : 0 }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildStructuredData(data)) }}
+      />
       {/* ── NAVIGATION ─── */}
       <nav className="nav">
         <div className="nav-inner">
@@ -808,6 +887,8 @@ export default function HomePage({ initialData }) {
               <Edit3 size={14} /> Edit Home Screen
             </button>
           )}
+
+          <h1 className="sr-only">Back on Track: Pete Wright Memorial Summer All-Comers Track &amp; Field Series in Hagerstown, Maryland</h1>
 
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-stamp.png" alt="Back on Track" className="hero-stamp" />
