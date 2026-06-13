@@ -1437,7 +1437,7 @@ export default function HomePage({ initialData }) {
             <div className="contact-info-item"><Mail size={20} /><div><h4>Email</h4><p><a href={`mailto:${data.contact.email}`} style={{ color: "inherit", textDecoration: "none" }}>{data.contact.email}</a></p></div></div>
             <div className="contact-info-item"><Phone size={20} /><div><h4>Phone</h4><p><a href={`tel:${(data.contact.phone || "").replace(/[^\d+]/g, "")}`} style={{ color: "inherit", textDecoration: "none" }}>{data.contact.phone}</a></p></div></div>
             <div className="contact-info-item"><MapPin size={20} /><div><h4>Meet Location</h4><p>{data.contact.address}</p></div></div>
-            <div className="contact-info-item"><Users size={20} /><div><h4>Meet Director</h4><p>{data.about.director} — {data.about.directorTitle}</p></div></div>
+            <div className="contact-info-item"><Users size={20} /><div><h4>Meet Director</h4><p>{data.about.director}</p></div></div>
             <div className="social-links">
               {(() => {
                 const fb = safeExternalUrl(data.contact.facebook);
