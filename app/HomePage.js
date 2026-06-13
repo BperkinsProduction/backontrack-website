@@ -1431,8 +1431,8 @@ export default function HomePage({ initialData }) {
 
         <div className="contact-grid">
           <div>
-            <div className="contact-info-item"><Mail size={20} /><div><h4>Email</h4><p>{data.contact.email}</p></div></div>
-            <div className="contact-info-item"><Phone size={20} /><div><h4>Phone</h4><p>{data.contact.phone}</p></div></div>
+            <div className="contact-info-item"><Mail size={20} /><div><h4>Email</h4><p><a href={`mailto:${data.contact.email}`} style={{ color: "inherit", textDecoration: "none" }}>{data.contact.email}</a></p></div></div>
+            <div className="contact-info-item"><Phone size={20} /><div><h4>Phone</h4><p><a href={`tel:${(data.contact.phone || "").replace(/[^\d+]/g, "")}`} style={{ color: "inherit", textDecoration: "none" }}>{data.contact.phone}</a></p></div></div>
             <div className="contact-info-item"><MapPin size={20} /><div><h4>Meet Location</h4><p>{data.contact.address}</p></div></div>
             <div className="contact-info-item"><Users size={20} /><div><h4>Meet Director</h4><p>{data.about.director} — {data.about.directorTitle}</p></div></div>
             <div className="social-links">
@@ -1809,7 +1809,7 @@ export default function HomePage({ initialData }) {
           <div className="privacy-content" onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontWeight: 900, fontStyle: "italic", fontSize: "1.5rem", marginBottom: "1.5rem" }}>Privacy Policy & Terms of Use</h2>
             <p style={{ fontWeight: 200, lineHeight: 1.8, marginBottom: "1.5rem" }}>{data.privacyPolicy}</p>
-            <p style={{ fontWeight: 200, lineHeight: 1.8, marginBottom: "1.5rem" }}>For questions about our privacy practices or to request removal of your information, please contact us at {data.contact.email}.</p>
+            <p style={{ fontWeight: 200, lineHeight: 1.8, marginBottom: "1.5rem" }}>For questions about our privacy practices or to request removal of your information, please contact us at <a href={`mailto:${data.contact.email}`} style={{ color: "inherit", fontWeight: 700 }}>{data.contact.email}</a>.</p>
             <p style={{ fontWeight: 700, fontSize: "0.85rem", color: colors.medGray }}>{data.about.orgName} — {data.about.ein}</p>
             <div className="admin-btn-row"><button className="btn-sm primary" onClick={() => setShowPrivacy(false)}>Close</button></div>
           </div>
