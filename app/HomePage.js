@@ -42,7 +42,7 @@ const DEFAULT_DATA = {
   ],
   sponsors: [
     { id: 1780279241076, name: "Gleam and Glory", level: "Gold", logoUrl: "https://res.cloudinary.com/dmvkf3ms8/image/upload/v1780279238/backontrack-sponsors/i3zeqo7bpvmwhos8cqm0.png", website: "www.gleamandglory.com" },
-    { id: 1780604216615, name: "Thad Reid Productions", level: "Gold", logoUrl: "https://res.cloudinary.com/dmvkf3ms8/image/upload/v1780605049/backontrack-sponsors/mag5shyaspz9sxa1mdc3.jpg", website: "" },
+    { id: 1780604216615, name: "Thad Reid Productions", level: "Gold", logoUrl: "https://res.cloudinary.com/dmvkf3ms8/image/upload/v1780605049/backontrack-sponsors/mag5shyaspz9sxa1mdc3.jpg", website: "https://www.instagram.com/thadreidproductions/" },
     { id: 1780604305319, name: "Warehouse Cinemas", level: "Gold", logoUrl: "https://res.cloudinary.com/dmvkf3ms8/image/upload/v1780604968/backontrack-sponsors/rnmlunrmqs9bls2xeqgs.jpg", website: "www.warehousecinemas.com" },
   ],
   media: [
