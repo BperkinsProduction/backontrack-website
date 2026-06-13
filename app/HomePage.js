@@ -270,7 +270,7 @@ export default function HomePage({ initialData }) {
   const [editData, setEditData] = useState({});
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [newsletterStatus, setNewsletterStatus] = useState("idle"); // idle | sending | sent | error
-  const [selectedResultSeason, setSelectedResultSeason] = useState("2026");
+  const [selectedResultSeason, setSelectedResultSeason] = useState(() => String(new Date().getFullYear()));
   const [galleryFilter, setGalleryFilter] = useState("all");
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [galleryUploading, setGalleryUploading] = useState(false);
@@ -309,6 +309,21 @@ export default function HomePage({ initialData }) {
     s.async = true;
     document.body.appendChild(s);
   }, [adminMode]);
+
+  // ─── Close any open overlay with the Escape key ───
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      setEditModal(null);
+      setEditError("");
+      setBrowseOpen(false);
+      setShowPrivacy(false);
+      setShowAdminLogin(false);
+      setMobileMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   // ─── Save data to API helper (admin session required) ───
   const persistData = (newData) => {
@@ -861,7 +876,7 @@ export default function HomePage({ initialData }) {
               </li>
             ))}
           </ul>
-          <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(true)}>
+          <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(true)} aria-label="Open menu">
             <Menu size={24} />
           </button>
         </div>
@@ -869,7 +884,7 @@ export default function HomePage({ initialData }) {
 
       {/* ── MOBILE NAV ─── */}
       <div className={`mobile-nav ${mobileMenuOpen ? "open" : ""}`}>
-        <button className="mobile-close" onClick={() => setMobileMenuOpen(false)}>
+        <button className="mobile-close" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">
           <X size={32} />
         </button>
         {navItems.map((item) => (
@@ -1132,7 +1147,10 @@ export default function HomePage({ initialData }) {
           <p className="section-desc">Check out past meet results and season standings. Results are posted after each meet.</p>
 
           <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
-            {["2026", "2025", "2024", "2023"].map((year) => (
+            {Array.from(new Set([String(new Date().getFullYear()), ...(data.results || []).map((r) => r.season)]))
+              .filter(Boolean)
+              .sort((a, b) => Number(b) - Number(a))
+              .map((year) => (
               <button key={year} className={`btn-sm ${selectedResultSeason === year ? "primary" : "ghost"}`} style={selectedResultSeason !== year ? { color: "white", borderColor: "rgba(255,255,255,0.2)" } : {}} onClick={() => setSelectedResultSeason(year)}>
                 {year} Season
               </button>
@@ -1442,13 +1460,13 @@ export default function HomePage({ initialData }) {
               {(() => {
                 const fb = safeExternalUrl(data.contact.facebook);
                 return fb ? (
-                  <a href={fb} target="_blank" rel="noopener noreferrer" className="social-link"><Facebook size={20} /></a>
+                  <a href={fb} target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Back on Track on Facebook"><Facebook size={20} /></a>
                 ) : null;
               })()}
               {(() => {
                 const ig = safeExternalUrl(data.contact.instagram);
                 return ig ? (
-                  <a href={ig} target="_blank" rel="noopener noreferrer" className="social-link"><Instagram size={20} /></a>
+                  <a href={ig} target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Back on Track on Instagram"><Instagram size={20} /></a>
                 ) : null;
               })()}
             </div>
