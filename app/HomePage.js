@@ -378,7 +378,7 @@ export default function HomePage({ initialData }) {
     }));
     setData((prev) => {
       // Remove any existing copies of the picked images, then add them to the
-      // chosen album — keeps a photo from appearing twice or in two albums.
+      // chosen album, keeps a photo from appearing twice or in two albums.
       const deduped = prev.gallery.filter((g) => !browseSelected.includes(g.id));
       const albums = prev.albums.map((al) =>
         al.id === albumId && !al.coverUrl && newItems[0]
@@ -936,7 +936,7 @@ export default function HomePage({ initialData }) {
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "2rem", marginTop: "2rem" }}>
           {[
-            { icon: <Users size={28} />, title: "For Everyone", desc: "Athletes of all ages and abilities — from first-time runners to seasoned competitors. Students, parents, coaches, and community members are all welcome." },
+            { icon: <Users size={28} />, title: "For Everyone", desc: "Athletes of all ages and abilities, from first-time runners to seasoned competitors. Students, parents, coaches, and community members are all welcome." },
             { icon: <Trophy size={28} />, title: "Track & Field Events", desc: "Sprints, distance, jumps, throws, and relays. A full slate of events every meet to challenge and inspire athletes at every level." },
             { icon: <Heart size={28} />, title: "Community Driven", desc: "Run by volunteers who believe in keeping kids active and families connected through the power of sport in the tri-state region." },
           ].map((card, i) => (
@@ -1105,7 +1105,7 @@ export default function HomePage({ initialData }) {
                   <div className="meet-card-date">{meet.date}</div>
                 </div>
                 <div className="meet-card-body">
-                  <div className="meet-card-detail"><Clock size={16} /><span>{meet.time} — Registration at 5:45 PM</span></div>
+                  <div className="meet-card-detail"><Clock size={16} /><span>{meet.time} (registration at 5:45 PM)</span></div>
                   <div className="meet-card-detail"><MapPin size={16} /><span>{meet.location}</span></div>
                   <div className="meet-card-detail"><Trophy size={16} /><span>{meet.events}</span></div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.5rem" }}>
@@ -1150,7 +1150,7 @@ export default function HomePage({ initialData }) {
               <div key={result.id} className="result-row">
                 <div className="result-info">
                   <h4>{result.meetName}</h4>
-                  <p>{result.date} — {result.highlights}</p>
+                  <p>{result.date}, {result.highlights}</p>
                 </div>
                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                   {(() => {
@@ -1237,7 +1237,7 @@ export default function HomePage({ initialData }) {
                   </div>
                   {albumPhotos.length === 0 ? (
                     <div className="album-empty">
-                      <p>No photos yet — {adminMode ? "click Upload to add photos" : "check back soon!"}</p>
+                      <p>No photos yet. {adminMode ? "Click Upload to add photos." : "Check back soon!"}</p>
                     </div>
                   ) : (
                     <div className="gallery-grid">
@@ -1729,7 +1729,7 @@ export default function HomePage({ initialData }) {
               <>
                 <h3>Create New Album</h3>
                 <p style={{ fontSize: "0.85rem", color: colors.medGray, marginBottom: "1rem" }}>Create an album for a specific meet or event to organize your photos.</p>
-                <div className="admin-field"><label>Album Name</label><input placeholder="e.g. Meet #1 — Season Opener" value={editData.albumName || ""} onChange={(e) => setEditData({ ...editData, albumName: e.target.value })} /></div>
+                <div className="admin-field"><label>Album Name</label><input placeholder="e.g. Meet #1 - Season Opener" value={editData.albumName || ""} onChange={(e) => setEditData({ ...editData, albumName: e.target.value })} /></div>
                 <div className="admin-field"><label>Date</label><input type="date" value={editData.albumDate || ""} onChange={(e) => setEditData({ ...editData, albumDate: e.target.value })} /></div>
               </>
             )}
@@ -1813,7 +1813,7 @@ export default function HomePage({ initialData }) {
             <h2 style={{ fontWeight: 900, fontStyle: "italic", fontSize: "1.5rem", marginBottom: "1.5rem" }}>Privacy Policy & Terms of Use</h2>
             <p style={{ fontWeight: 200, lineHeight: 1.8, marginBottom: "1.5rem" }}>{data.privacyPolicy}</p>
             <p style={{ fontWeight: 200, lineHeight: 1.8, marginBottom: "1.5rem" }}>For questions about our privacy practices or to request removal of your information, please contact us at <a href={`mailto:${data.contact.email}`} style={{ color: "inherit", fontWeight: 700 }}>{data.contact.email}</a>.</p>
-            <p style={{ fontWeight: 700, fontSize: "0.85rem", color: colors.medGray }}>{data.about.orgName} — {data.about.ein}</p>
+            <p style={{ fontWeight: 700, fontSize: "0.85rem", color: colors.medGray }}>{data.about.orgName} ({data.about.ein})</p>
             <div className="admin-btn-row"><button className="btn-sm primary" onClick={() => setShowPrivacy(false)}>Close</button></div>
           </div>
         </div>

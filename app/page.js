@@ -14,6 +14,21 @@ function getKV() {
   });
 }
 
+// Replace em/en dashes with a plain hyphen in every saved text value so old
+// content keeps the site's no-dash style without needing a manual admin edit.
+function cleanDashes(value) {
+  if (typeof value === "string") {
+    return value.replace(/\s*[—–]\s*/g, " - ");
+  }
+  if (Array.isArray(value)) return value.map(cleanDashes);
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) out[k] = cleanDashes(v);
+    return out;
+  }
+  return value;
+}
+
 // Server component: fetch saved site data before render so the first HTML
 // already contains real content (dates, contacts, sponsors) for visitors,
 // search engines, and link previews. HomePage falls back to its built-in
@@ -25,5 +40,5 @@ export default async function Page() {
   } catch (error) {
     console.error("KV read error during page render:", error);
   }
-  return <HomePage initialData={saved} />;
+  return <HomePage initialData={cleanDashes(saved)} />;
 }
