@@ -17,6 +17,7 @@ const DEFAULT_DATA = {
       "Over 25 years of promoting health, fitness and community through the sport of running for kids, families and athletes of all ages.",
     ctaText: "View Upcoming Meets",
     style: "white",
+    videoUrl: "",
   },
   about: {
     title: "About Back on Track",
@@ -913,6 +914,26 @@ export default function HomePage({ initialData }) {
           <a className="btn-primary hero-btn-dark" href="#schedule" onClick={(e) => { e.preventDefault(); scrollTo("schedule"); }}>
             {data.hero.ctaText}
           </a>
+
+          {(() => {
+            const vsrc = cloudinaryVideoSrc(data.hero.videoUrl);
+            if (!vsrc) return null;
+            return (
+              <div style={{ width: "100%", maxWidth: 760, margin: "2.75rem auto 0", borderRadius: 16, overflow: "hidden", boxShadow: "0 12px 44px rgba(0,0,0,0.18)", background: "#000" }}>
+                <video
+                  src={vsrc}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  controls
+                  preload="metadata"
+                  aria-label="Back on Track promo video"
+                  style={{ width: "100%", display: "block" }}
+                />
+              </div>
+            );
+          })()}
         </div>
       </section>
 
@@ -1570,6 +1591,33 @@ export default function HomePage({ initialData }) {
                 <div className="admin-field"><label>Subheadline</label><input value={editData.subhead || ""} onChange={(e) => setEditData({ ...editData, subhead: e.target.value })} /></div>
                 <div className="admin-field"><label>Tagline</label><textarea value={editData.tagline || ""} onChange={(e) => setEditData({ ...editData, tagline: e.target.value })} /></div>
                 <div className="admin-field"><label>Button Text</label><input value={editData.ctaText || ""} onChange={(e) => setEditData({ ...editData, ctaText: e.target.value })} /></div>
+                <div className="admin-field">
+                  <label>Promo Video (autoplays on loop, muted)</label>
+                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                    <input value={editData.videoUrl || ""} onChange={(e) => setEditData({ ...editData, videoUrl: e.target.value })} placeholder="URL appears after upload" style={{ flex: 1 }} />
+                    <button type="button" className="btn-sm primary" onClick={() => {
+                      if (!window.cloudinary) { alert("Upload widget is still loading."); return; }
+                      const w = window.cloudinary.createUploadWidget({
+                        cloudName: CLOUD_NAME, uploadPreset: UPLOAD_PRESET,
+                        folder: "backontrack-videos", sources: ["local", "camera"], multiple: false, maxFiles: 1,
+                        resourceType: "video", clientAllowedFormats: ["mp4", "mov", "m4v", "webm", "avi", "3gp", "hevc"],
+                        maxFileSize: 100000000,
+                        styles: { palette: { window: "#1A1A1A", windowBorder: "#F5A123", tabIcon: "#F5A123", menuIcons: "#F5A123", textDark: "#1A1A1A", textLight: "#FFFFFF", link: "#F5A123", action: "#F5A123", inactiveTabIcon: "#888", error: "#FF4444", inProgress: "#F5A123", complete: "#28A745", sourceBg: "#2A2A2A" } }
+                      }, (err, res) => {
+                        if (!err && res && res.event === "success") {
+                          setEditData((prev) => ({ ...prev, videoUrl: res.info.secure_url }));
+                        }
+                      });
+                      w.open();
+                    }} style={{ display: "flex", alignItems: "center", gap: "0.4rem", whiteSpace: "nowrap" }}>
+                      <Upload size={14} /> Upload Video
+                    </button>
+                    {editData.videoUrl && (
+                      <button type="button" className="btn-sm ghost" onClick={() => setEditData({ ...editData, videoUrl: "" })}>Remove</button>
+                    )}
+                  </div>
+                  <p style={{ fontSize: "0.75rem", color: colors.medGray, marginTop: "0.4rem" }}>Shows below the home button. Plays automatically on repeat (muted); visitors can tap to unmute. Max 100 MB.</p>
+                </div>
               </>
             )}
             {editModal === "about" && (
