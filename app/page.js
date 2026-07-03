@@ -40,5 +40,15 @@ export default async function Page() {
   } catch (error) {
     console.error("KV read error during page render:", error);
   }
-  return <HomePage initialData={cleanDashes(saved)} />;
+  // Today's date in the venue's timezone (Hagerstown, MD = Eastern), as
+  // YYYY-MM-DD, so meets auto-flip to "completed" the day after they run.
+  // revalidate = 60 keeps this current without a redeploy.
+  const serverDate = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+
+  return <HomePage initialData={cleanDashes(saved)} serverDate={serverDate} />;
 }

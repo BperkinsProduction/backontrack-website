@@ -259,7 +259,7 @@ function safeLogoUrl(input) {
   }
 }
 
-export default function HomePage({ initialData }) {
+export default function HomePage({ initialData, serverDate }) {
   const [data, setData] = useState(() => ({ ...DEFAULT_DATA, ...(initialData || {}) }));
   const [activeSection, setActiveSection] = useState("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -1134,7 +1134,10 @@ export default function HomePage({ initialData }) {
           )}
 
           <div className="meets-grid">
-            {data.meets.map((meet) => (
+            {data.meets.map((meet) => {
+              const iso = toISODate(meet.date);
+              const isCompleted = meet.status === "completed" || (!!iso && !!serverDate && iso < serverDate);
+              return (
               <div key={meet.id} className="meet-card">
                 <div className="meet-card-header">
                   <h3>{meet.title}</h3>
@@ -1145,7 +1148,7 @@ export default function HomePage({ initialData }) {
                   <div className="meet-card-detail"><MapPin size={16} /><span>{meet.location}</span></div>
                   <div className="meet-card-detail"><Trophy size={16} /><span>{meet.events}</span></div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.5rem" }}>
-                    <span className={`meet-status ${meet.status}`}>{meet.status}</span>
+                    <span className={isCompleted ? "meet-status completed" : ""}>{isCompleted ? "completed" : ""}</span>
                     {adminMode && (
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <button className="btn-sm ghost" onClick={() => openEdit("meet-edit", meet)}><Edit3 size={12} /></button>
@@ -1155,7 +1158,8 @@ export default function HomePage({ initialData }) {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
