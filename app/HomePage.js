@@ -1136,7 +1136,7 @@ export default function HomePage({ initialData, serverDate }) {
           <div className="meets-grid">
             {data.meets.map((meet) => {
               const iso = toISODate(meet.date);
-              const isCompleted = meet.status === "completed" || (!!iso && !!serverDate && iso < serverDate);
+              const isCompleted = !!iso && !!serverDate && iso < serverDate;
               return (
               <div key={meet.id} className="meet-card">
                 <div className="meet-card-header">
@@ -1642,7 +1642,7 @@ export default function HomePage({ initialData, serverDate }) {
                 <div className="admin-field"><label>Time</label><input value={editData.time || ""} onChange={(e) => setEditData({ ...editData, time: e.target.value })} placeholder="e.g., 6:00 PM" /></div>
                 <div className="admin-field"><label>Location</label><input value={editData.location || ""} onChange={(e) => setEditData({ ...editData, location: e.target.value })} /></div>
                 <div className="admin-field"><label>Events</label><textarea value={editData.events || ""} onChange={(e) => setEditData({ ...editData, events: e.target.value })} /></div>
-                <div className="admin-field"><label>Status</label><select value={editData.status || "upcoming"} onChange={(e) => setEditData({ ...editData, status: e.target.value })}><option value="upcoming">Upcoming</option><option value="completed">Completed</option></select></div>
+                <p style={{ fontSize: "0.8rem", color: colors.medGray, marginTop: "0.25rem" }}>The &quot;Completed&quot; badge is added automatically the day after the meet date. no need to set it.</p>
               </>
             )}
             {(editModal === "result-edit" || editModal === "result-add") && (
