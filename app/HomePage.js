@@ -199,6 +199,31 @@ function toISODate(input) {
   return `${y}-${m}-${day}`;
 }
 
+// Normalize a result's season to a clean 4-digit year, tolerating messy
+// admin entry (e.g. season "2026 Season" or "Season Opener"). Falls back to
+// deriving the year from the result date, so the year tabs never show junk.
+function resultYear(r) {
+  if (!r) return null;
+  const seasonYear = String(r.season || "").match(/(19|20)\d{2}/);
+  if (seasonYear) return seasonYear[0];
+  const date = String(r.date || "");
+  const dateYear4 = date.match(/(19|20)\d{2}/);
+  if (dateYear4) return dateYear4[0];
+  const dateYear2 = date.match(/[/\-.](\d{2})\s*$/);
+  if (dateYear2) return `20${dateYear2[1]}`;
+  return null;
+}
+
+// Whole days from todayIso (YYYY-MM-DD) to iso (YYYY-MM-DD). Both parsed the
+// same way, so the result is stable across server and client renders.
+function daysUntil(iso, todayIso) {
+  if (!iso || !todayIso) return null;
+  const a = new Date(`${iso}T00:00:00`);
+  const b = new Date(`${todayIso}T00:00:00`);
+  if (isNaN(a.getTime()) || isNaN(b.getTime())) return null;
+  return Math.round((a - b) / 86400000);
+}
+
 // Build schema.org JSON-LD so Google can show the organization and each
 // meet as a rich result (helps "track meets near Hagerstown" searches).
 function buildStructuredData(d) {
@@ -886,6 +911,16 @@ export default function HomePage({ initialData, serverDate }) {
     setMobileMenuOpen(false);
   };
 
+  // Next upcoming meet: earliest meet whose date is today or later.
+  const upcomingMeets = (data.meets || [])
+    .map((m) => ({ m, iso: toISODate(m.date) }))
+    .filter((x) => x.iso && (!serverDate || x.iso >= serverDate))
+    .sort((a, b) => (a.iso < b.iso ? -1 : a.iso > b.iso ? 1 : 0));
+  const nextMeet = upcomingMeets[0] ? upcomingMeets[0].m : null;
+  const nextMeetDays = upcomingMeets[0] ? daysUntil(upcomingMeets[0].iso, serverDate) : null;
+  const nextMeetCountdown =
+    nextMeetDays === 0 ? "Today" : nextMeetDays === 1 ? "Tomorrow" : nextMeetDays > 1 ? `In ${nextMeetDays} days` : "";
+
   return (
     <div style={{ paddingBottom: adminMode ? 56 : 0 }}>
       <script
@@ -1014,6 +1049,31 @@ export default function HomePage({ initialData, serverDate }) {
           </button>
         )}
       </div>
+
+      {/* ── NEXT MEET SPOTLIGHT ─── */}
+      {nextMeet && (
+        <section aria-label="Next meet" style={{ background: "#1A1A1A", padding: "2.75rem 1.5rem", textAlign: "center" }}>
+          <div style={{ maxWidth: 880, margin: "0 auto" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
+              <span style={{ color: "#F5A123", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", fontSize: "0.8rem" }}>Next Meet</span>
+              {nextMeetCountdown && (
+                <span style={{ background: "#F5A123", color: "#1A1A1A", fontWeight: 700, fontSize: "0.75rem", padding: "0.2rem 0.7rem", borderRadius: 999, letterSpacing: "0.02em" }}>{nextMeetCountdown}</span>
+              )}
+            </div>
+            <h2 style={{ color: "#FFFFFF", fontFamily: "'Raleway', sans-serif", fontWeight: 900, fontStyle: "italic", fontSize: "clamp(1.4rem, 4vw, 2.1rem)", margin: "0 0 1rem" }}>
+              {nextMeet.title}
+            </h2>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: "1.25rem", color: "rgba(255,255,255,0.85)", fontWeight: 500, fontSize: "0.95rem" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}><Calendar size={16} style={{ color: "#F5A123" }} /> {nextMeet.date}</span>
+              {nextMeet.time && <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}><Clock size={16} style={{ color: "#F5A123" }} /> {nextMeet.time}</span>}
+              {nextMeet.location && <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}><MapPin size={16} style={{ color: "#F5A123" }} /> {nextMeet.location.split(",")[0]}</span>}
+            </div>
+            <a href="#schedule" onClick={(e) => { e.preventDefault(); scrollTo("schedule"); }} style={{ display: "inline-block", marginTop: "1.5rem", background: "#F5A123", color: "#1A1A1A", fontWeight: 700, textDecoration: "none", padding: "0.7rem 1.8rem", borderRadius: 999, fontSize: "0.9rem", letterSpacing: "0.02em" }}>
+              View Full Schedule
+            </a>
+          </div>
+        </section>
+      )}
 
       {/* ── ABOUT ─── */}
       <section id="about" className="section">
@@ -1233,7 +1293,7 @@ export default function HomePage({ initialData, serverDate }) {
           <p className="section-desc">Check out past meet results and season standings. Results are posted after each meet.</p>
 
           <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
-            {Array.from(new Set([String(new Date().getFullYear()), ...(data.results || []).map((r) => r.season)]))
+            {Array.from(new Set([String(new Date().getFullYear()), ...(data.results || []).map(resultYear)]))
               .filter(Boolean)
               .sort((a, b) => Number(b) - Number(a))
               .map((year) => (
@@ -1250,7 +1310,7 @@ export default function HomePage({ initialData, serverDate }) {
           )}
 
           <div className="results-list">
-            {data.results.filter((r) => r.season === selectedResultSeason).map((result) => (
+            {data.results.filter((r) => resultYear(r) === selectedResultSeason).map((result) => (
               <div key={result.id} className="result-row">
                 <div className="result-info">
                   <h4>{result.meetName}</h4>
@@ -1274,7 +1334,7 @@ export default function HomePage({ initialData, serverDate }) {
                 </div>
               </div>
             ))}
-            {data.results.filter((r) => r.season === selectedResultSeason).length === 0 && (
+            {data.results.filter((r) => resultYear(r) === selectedResultSeason).length === 0 && (
               <p style={{ color: "rgba(255,255,255,0.5)", textAlign: "center", padding: "2rem" }}>No results yet for {selectedResultSeason} season.</p>
             )}
           </div>
