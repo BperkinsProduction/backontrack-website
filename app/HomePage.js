@@ -224,6 +224,20 @@ function daysUntil(iso, todayIso) {
   return Math.round((a - b) / 86400000);
 }
 
+// Highlight the searched substring inside a name (for the results viewer).
+function highlightName(name, q) {
+  if (!q) return name;
+  const idx = name.toLowerCase().indexOf(q);
+  if (idx < 0) return name;
+  return (
+    <>
+      {name.slice(0, idx)}
+      <mark style={{ background: "#FDE68A", padding: "0 1px", borderRadius: 2 }}>{name.slice(idx, idx + q.length)}</mark>
+      {name.slice(idx + q.length)}
+    </>
+  );
+}
+
 // Build schema.org JSON-LD so Google can show the organization and each
 // meet as a rich result (helps "track meets near Hagerstown" searches).
 function buildStructuredData(d) {
@@ -316,6 +330,11 @@ export default function HomePage({ initialData, serverDate }) {
   const [annDismissed, setAnnDismissed] = useState(false);
   const [annHeight, setAnnHeight] = useState(0);
   const annRef = useRef(null);
+  const [resultsMeet, setResultsMeet] = useState(null);
+  const [resultsEvents, setResultsEvents] = useState([]);
+  const [resultsLoading, setResultsLoading] = useState(false);
+  const [resultsError, setResultsError] = useState("");
+  const [resultsQuery, setResultsQuery] = useState("");
 
   const announcement = data.announcement || {};
   const annActive = !!(announcement.active && announcement.text);
@@ -358,6 +377,7 @@ export default function HomePage({ initialData, serverDate }) {
       setShowPrivacy(false);
       setShowAdminLogin(false);
       setMobileMenuOpen(false);
+      setResultsMeet(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -388,6 +408,34 @@ export default function HomePage({ initialData, serverDate }) {
       localStorage.setItem("bot_ann_dismissed", announcement.text);
     } catch {}
     setAnnDismissed(true);
+  };
+
+  // ─── On-site results viewer (parses the meet's Google Sheet) ───
+  const openResults = async (result) => {
+    setResultsMeet(result);
+    setResultsEvents([]);
+    setResultsError("");
+    setResultsQuery("");
+    setResultsLoading(true);
+    try {
+      const res = await fetch(`/api/results?url=${encodeURIComponent(result.downloadUrl || "")}`);
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && Array.isArray(json.events) && json.events.length) {
+        setResultsEvents(json.events);
+      } else {
+        setResultsError(json.error || "No results were found in that sheet yet.");
+      }
+    } catch {
+      setResultsError("Could not load the results. Please try again.");
+    }
+    setResultsLoading(false);
+  };
+
+  const closeResults = () => {
+    setResultsMeet(null);
+    setResultsEvents([]);
+    setResultsError("");
+    setResultsQuery("");
   };
 
   // ─── Save data to API helper (admin session required) ───
@@ -1319,10 +1367,12 @@ export default function HomePage({ initialData, serverDate }) {
                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                   {(() => {
                     const r = safeExternalUrl(result.downloadUrl);
-                    return r ? (
-                      <a href={r} target="_blank" rel="noopener noreferrer" className="result-badge">View Results</a>
+                    if (!r) return <span className="result-badge" style={{ opacity: 0.5 }}>Coming Soon</span>;
+                    const isSheet = /docs\.google\.com\/spreadsheets/.test(r);
+                    return isSheet ? (
+                      <button type="button" className="result-badge" onClick={() => openResults(result)} style={{ cursor: "pointer", border: 0, font: "inherit" }}>View Results</button>
                     ) : (
-                      <span className="result-badge" style={{ opacity: 0.5 }}>Coming Soon</span>
+                      <a href={r} target="_blank" rel="noopener noreferrer" className="result-badge">View Results</a>
                     );
                   })()}
                   {adminMode && (
@@ -2016,6 +2066,95 @@ export default function HomePage({ initialData, serverDate }) {
               <button className="btn-sm primary" onClick={addBrowsedToGallery} disabled={browseSelected.length === 0} style={{ display: "flex", alignItems: "center", gap: "0.4rem", opacity: browseSelected.length === 0 ? 0.5 : 1 }}>
                 <Plus size={14} /> Add {browseSelected.length > 0 ? browseSelected.length : ""} {browseSelected.length === 1 ? "Photo" : "Photos"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── RESULTS VIEWER MODAL ─── */}
+      {resultsMeet && (
+        <div className="admin-modal" onClick={closeResults} style={{ alignItems: "flex-start", padding: "2vh 0.75rem", overflowY: "auto" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, maxWidth: 840, width: "100%", maxHeight: "96vh", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.35)" }}>
+            <div style={{ background: "#1A1A1A", color: "#fff", padding: "1.15rem 1.4rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexShrink: 0 }}>
+              <div>
+                <div style={{ color: "#F5A123", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", fontSize: "0.68rem" }}>Meet Results</div>
+                <div style={{ fontFamily: "'Raleway', sans-serif", fontWeight: 900, fontStyle: "italic", fontSize: "1.2rem", lineHeight: 1.2 }}>{resultsMeet.meetName}{resultsMeet.date ? ` · ${resultsMeet.date}` : ""}</div>
+              </div>
+              <button onClick={closeResults} aria-label="Close results" style={{ background: "rgba(255,255,255,0.15)", border: 0, color: "#fff", borderRadius: "50%", width: 36, height: 36, minWidth: 36, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={18} /></button>
+            </div>
+
+            {!resultsLoading && !resultsError && resultsEvents.length > 0 && (
+              <div style={{ padding: "1rem 1.4rem 0.5rem", flexShrink: 0 }}>
+                <input
+                  value={resultsQuery}
+                  onChange={(e) => setResultsQuery(e.target.value)}
+                  placeholder="Search for a name..."
+                  aria-label="Search results by name"
+                  style={{ width: "100%", padding: "0.75rem 1rem", border: "2px solid #eee", borderRadius: 10, fontSize: "1rem", outline: "none" }}
+                />
+              </div>
+            )}
+
+            <div style={{ overflowY: "auto", padding: "1rem 1.4rem 2rem" }}>
+              {resultsLoading ? (
+                <p style={{ textAlign: "center", color: colors.medGray, padding: "2rem" }}>Loading results...</p>
+              ) : resultsError ? (
+                <div style={{ textAlign: "center", padding: "2rem", color: colors.medGray }}>
+                  <p style={{ marginBottom: "1rem" }}>{resultsError}</p>
+                  {safeExternalUrl(resultsMeet.downloadUrl) && (
+                    <a href={safeExternalUrl(resultsMeet.downloadUrl)} target="_blank" rel="noopener noreferrer" style={{ color: colors.orangeDark, fontWeight: 700 }}>Open the original sheet</a>
+                  )}
+                </div>
+              ) : (() => {
+                const q = resultsQuery.trim().toLowerCase();
+                const shown = q
+                  ? resultsEvents.map((ev) => ({ ...ev, entries: ev.entries.filter((en) => en.name.toLowerCase().includes(q)) })).filter((ev) => ev.entries.length)
+                  : resultsEvents;
+                const totalMatches = shown.reduce((n, ev) => n + ev.entries.length, 0);
+                if (q && totalMatches === 0) {
+                  return <p style={{ textAlign: "center", color: colors.medGray, padding: "2rem" }}>No athletes found matching &quot;{resultsQuery.trim()}&quot;.</p>;
+                }
+                return (
+                  <>
+                    {q && <p style={{ fontSize: "0.85rem", color: colors.medGray, marginBottom: "1rem" }}>{totalMatches} result{totalMatches !== 1 ? "s" : ""} for &quot;{resultsQuery.trim()}&quot;</p>}
+                    {shown.map((ev, ei) => (
+                      <div key={ei} style={{ marginBottom: "1.75rem" }}>
+                        <h4 style={{ color: "#1A1A1A", fontFamily: "'Raleway', sans-serif", fontWeight: 900, fontStyle: "italic", fontSize: "1.05rem", marginBottom: "0.6rem", borderLeft: "4px solid #F5A123", paddingLeft: "0.6rem" }}>{ev.title}</h4>
+                        <div style={{ overflowX: "auto" }}>
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
+                            <thead>
+                              <tr style={{ textAlign: "left", color: "#999", fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                                <th style={{ padding: "0.35rem 0.6rem", width: 56 }}>Place</th>
+                                <th style={{ padding: "0.35rem 0.6rem" }}>Name</th>
+                                <th style={{ padding: "0.35rem 0.6rem", width: 46 }}>Age</th>
+                                <th style={{ padding: "0.35rem 0.6rem", width: 74 }}>Time</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {ev.entries.map((en, i) => {
+                                const bg = en.place === "1" ? "#FEF3C7" : en.place === "2" ? "#EEF2F6" : en.place === "3" ? "#FCE7D8" : (i % 2 ? "#FAFAFA" : "#FFFFFF");
+                                return (
+                                  <tr key={i} style={{ background: bg }}>
+                                    <td style={{ padding: "0.55rem 0.6rem", fontWeight: 800, color: en.place === "1" ? "#B7791F" : "#1A1A1A" }}>{en.place}</td>
+                                    <td style={{ padding: "0.55rem 0.6rem", fontWeight: 600 }}>{highlightName(en.name, q)}</td>
+                                    <td style={{ padding: "0.55rem 0.6rem", color: "#666" }}>{en.age}</td>
+                                    <td style={{ padding: "0.55rem 0.6rem", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{en.time}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
+                    {safeExternalUrl(resultsMeet.downloadUrl) && (
+                      <p style={{ fontSize: "0.8rem", color: colors.medGray, textAlign: "center", marginTop: "0.5rem" }}>
+                        <a href={safeExternalUrl(resultsMeet.downloadUrl)} target="_blank" rel="noopener noreferrer" style={{ color: colors.orangeDark, fontWeight: 700 }}>Open the original spreadsheet</a>
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>
