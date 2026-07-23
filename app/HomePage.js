@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Trophy, Camera, Users, Mail, MapPin, Clock, Menu, X, Heart,
   Star, Phone, Facebook, Instagram, Edit3, Save, LogOut, Plus,
@@ -18,6 +18,11 @@ const DEFAULT_DATA = {
     ctaText: "View Upcoming Meets",
     style: "white",
     videoUrl: "",
+  },
+  announcement: {
+    active: false,
+    text: "",
+    level: "info",
   },
   about: {
     title: "About Back on Track",
@@ -283,6 +288,13 @@ export default function HomePage({ initialData, serverDate }) {
   const [browseLoading, setBrowseLoading] = useState(false);
   const [browseError, setBrowseError] = useState("");
   const [browseCursor, setBrowseCursor] = useState(null);
+  const [annDismissed, setAnnDismissed] = useState(false);
+  const [annHeight, setAnnHeight] = useState(0);
+  const annRef = useRef(null);
+
+  const announcement = data.announcement || {};
+  const annActive = !!(announcement.active && announcement.text);
+  const annVisible = annActive && (adminMode || !annDismissed);
 
   // Saved site data arrives via the initialData prop, server-rendered by
   // app/page.js, so crawlers and first paint see real content immediately.
@@ -325,6 +337,33 @@ export default function HomePage({ initialData, serverDate }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  // ─── Announcement banner: restore per-message dismissal ───
+  useEffect(() => {
+    if (!annActive) return;
+    try {
+      setAnnDismissed(localStorage.getItem("bot_ann_dismissed") === announcement.text);
+    } catch {}
+  }, [annActive, announcement.text]);
+
+  // Measure the banner so the fixed nav and anchor scrolling sit below it.
+  useEffect(() => {
+    const measure = () => {
+      const h = annVisible && annRef.current ? annRef.current.offsetHeight : 0;
+      setAnnHeight(h);
+      document.documentElement.style.scrollPaddingTop = `${h + 80}px`;
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [annVisible, announcement.text, announcement.level]);
+
+  const dismissAnnouncement = () => {
+    try {
+      localStorage.setItem("bot_ann_dismissed", announcement.text);
+    } catch {}
+    setAnnDismissed(true);
+  };
 
   // ─── Save data to API helper (admin session required) ───
   const persistData = (newData) => {
@@ -796,6 +835,7 @@ export default function HomePage({ initialData, serverDate }) {
     else if (editModal === "about") newData.about = { ...newData.about, ...editData };
     else if (editModal === "contact") newData.contact = { ...newData.contact, ...editData };
     else if (editModal === "infobar") newData.infoBar = editData.items;
+    else if (editModal === "announcement") newData.announcement = { active: !!editData.active, text: editData.text || "", level: editData.level || "info" };
     else if (editModal === "meet-edit") {
       newData.meets = newData.meets.map((m) => (m.id === editData.id ? editData : m));
     } else if (editModal === "meet-add") {
@@ -852,8 +892,29 @@ export default function HomePage({ initialData, serverDate }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(buildStructuredData(data)) }}
       />
+
+      {/* ── ANNOUNCEMENT BANNER ─── */}
+      {annVisible && (() => {
+        const palette = {
+          info: { bg: "#F5A123", fg: "#1A1A1A" },
+          warning: { bg: "#FBBF24", fg: "#1A1A1A" },
+          urgent: { bg: "#DC2626", fg: "#FFFFFF" },
+        };
+        const c = palette[announcement.level] || palette.info;
+        return (
+          <div ref={annRef} role="alert" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1100, background: c.bg, color: c.fg }}>
+            <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0.6rem 1.25rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem" }}>
+              <span style={{ fontWeight: 700, fontSize: "0.9rem", textAlign: "center", lineHeight: 1.4 }}>{announcement.text}</span>
+              <button onClick={dismissAnnouncement} aria-label="Dismiss announcement" style={{ background: "rgba(0,0,0,0.12)", border: 0, color: "inherit", borderRadius: "50%", width: 26, height: 26, minWidth: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── NAVIGATION ─── */}
-      <nav className="nav">
+      <nav className="nav" style={{ top: annVisible ? annHeight : 0 }}>
         <div className="nav-inner">
           <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer" }} onClick={() => scrollTo("home")}>
             <span style={{ fontFamily: "'Raleway', sans-serif", fontWeight: 900, fontStyle: "italic", fontSize: "1.6rem", letterSpacing: "0.03em", lineHeight: 1, whiteSpace: "nowrap", WebkitTextStroke: "1.5px #F5A123", color: "transparent" }}>
@@ -1562,11 +1623,16 @@ export default function HomePage({ initialData, serverDate }) {
         <div className="admin-bar">
           <div className="admin-bar-left">
             <div className="admin-indicator"><div className="admin-dot" />Admin Mode Active</div>
-            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.8rem" }}>Click any section to edit. Changes are saved in-memory.</span>
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.8rem" }}>Click any section to edit. Changes save automatically.</span>
           </div>
-          <button className="btn-sm primary" onClick={handleAdminLogout} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-            <LogOut size={14} /> Exit Admin
-          </button>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <button className="btn-sm ghost" onClick={() => openEdit("announcement", data.announcement)} style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "white", borderColor: "rgba(255,255,255,0.25)" }}>
+              <FileText size={14} /> Announcement
+            </button>
+            <button className="btn-sm primary" onClick={handleAdminLogout} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              <LogOut size={14} /> Exit Admin
+            </button>
+          </div>
         </div>
       )}
 
@@ -1722,6 +1788,25 @@ export default function HomePage({ initialData, serverDate }) {
                   </div>
                 ))}
                 <button type="button" className="btn-sm ghost" onClick={() => setEditData({ ...editData, items: [...(editData.items || []), { label: "", value: "" }] })} style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginTop: "0.5rem" }}><Plus size={14} /> Add Item</button>
+              </>
+            )}
+            {editModal === "announcement" && (
+              <>
+                <h3>Announcement Banner</h3>
+                <p style={{ fontSize: "0.85rem", color: colors.medGray, marginBottom: "1rem" }}>A banner across the top of the site for weather updates, cancellations, or urgent news. Visitors can dismiss it, and it reappears if you change the message.</p>
+                <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", cursor: "pointer", fontWeight: 600 }}>
+                  <input type="checkbox" checked={!!editData.active} onChange={(e) => setEditData({ ...editData, active: e.target.checked })} style={{ width: 18, height: 18 }} />
+                  Show the banner
+                </label>
+                <div className="admin-field"><label>Message</label><textarea value={editData.text || ""} onChange={(e) => setEditData({ ...editData, text: e.target.value })} placeholder="e.g. Meet #2 (July 14) is postponed to July 16 due to weather." style={{ minHeight: 80 }} /></div>
+                <div className="admin-field">
+                  <label>Style</label>
+                  <select value={editData.level || "info"} onChange={(e) => setEditData({ ...editData, level: e.target.value })}>
+                    <option value="info">Info (orange)</option>
+                    <option value="warning">Warning (yellow)</option>
+                    <option value="urgent">Urgent / Cancellation (red)</option>
+                  </select>
+                </div>
               </>
             )}
             {(editModal === "media-edit" || editModal === "media-add") && (
