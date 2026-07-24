@@ -1316,8 +1316,17 @@ export default function HomePage({ initialData, serverDate }) {
                   <div className="meet-card-detail"><Clock size={16} /><span>{meet.time} (registration at 5:45 PM)</span></div>
                   <div className="meet-card-detail"><MapPin size={16} /><span>{meet.location}</span></div>
                   <div className="meet-card-detail"><Trophy size={16} /><span>{meet.events}</span></div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.5rem" }}>
-                    <span className={isCompleted ? "meet-status completed" : ""}>{isCompleted ? "completed" : ""}</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.5rem", gap: "0.5rem" }}>
+                    {isCompleted ? (
+                      <span className="meet-status completed">completed</span>
+                    ) : (
+                      <a
+                        href={`/api/calendar?title=${encodeURIComponent(`${meet.title} - Back on Track`)}&date=${encodeURIComponent(meet.date || "")}&time=${encodeURIComponent(meet.time || "")}&location=${encodeURIComponent(meet.location || "")}`}
+                        style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", color: colors.orangeDark, fontWeight: 700, fontSize: "0.8rem", textDecoration: "none" }}
+                      >
+                        <Calendar size={14} /> Add to Calendar
+                      </a>
+                    )}
                     {adminMode && (
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <button className="btn-sm ghost" onClick={() => openEdit("meet-edit", meet)}><Edit3 size={12} /></button>
