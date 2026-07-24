@@ -224,6 +224,20 @@ function daysUntil(iso, todayIso) {
   return Math.round((a - b) / 86400000);
 }
 
+// Map an Open-Meteo weather code to an icon + short label.
+function weatherInfo(code) {
+  if (code == null) return { icon: "🌡️", label: "" };
+  if (code === 0) return { icon: "☀️", label: "Clear" };
+  if (code === 1 || code === 2) return { icon: "🌤️", label: "Partly cloudy" };
+  if (code === 3) return { icon: "☁️", label: "Cloudy" };
+  if (code === 45 || code === 48) return { icon: "🌫️", label: "Fog" };
+  if ([51, 53, 55, 56, 57].includes(code)) return { icon: "🌦️", label: "Drizzle" };
+  if ([61, 63, 65, 80, 81, 82].includes(code)) return { icon: "🌧️", label: "Rain" };
+  if ([66, 67, 71, 73, 75, 77, 85, 86].includes(code)) return { icon: "❄️", label: "Snow" };
+  if ([95, 96, 99].includes(code)) return { icon: "⛈️", label: "Storms" };
+  return { icon: "🌡️", label: "" };
+}
+
 // Highlight the searched substring inside a name (for the results viewer).
 function highlightName(name, q) {
   if (!q) return name;
@@ -303,7 +317,7 @@ function safeLogoUrl(input) {
   }
 }
 
-export default function HomePage({ initialData, serverDate }) {
+export default function HomePage({ initialData, serverDate, weather }) {
   const [data, setData] = useState(() => ({ ...DEFAULT_DATA, ...(initialData || {}) }));
   const [activeSection, setActiveSection] = useState("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -335,6 +349,10 @@ export default function HomePage({ initialData, serverDate }) {
   const [resultsLoading, setResultsLoading] = useState(false);
   const [resultsError, setResultsError] = useState("");
   const [resultsQuery, setResultsQuery] = useState("");
+  const [athleteQuery, setAthleteQuery] = useState("");
+  const [athleteMatches, setAthleteMatches] = useState([]);
+  const [athleteLoading, setAthleteLoading] = useState(false);
+  const [athleteSearched, setAthleteSearched] = useState(false);
 
   const announcement = data.announcement || {};
   const annActive = !!(announcement.active && announcement.text);
@@ -437,6 +455,32 @@ export default function HomePage({ initialData, serverDate }) {
     setResultsError("");
     setResultsQuery("");
   };
+
+  // ─── Season-wide athlete search (across every meet's results) ───
+  useEffect(() => {
+    const q = athleteQuery.trim();
+    if (q.length < 2) {
+      setAthleteMatches([]);
+      setAthleteSearched(false);
+      setAthleteLoading(false);
+      return;
+    }
+    setAthleteLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/athlete-search?name=${encodeURIComponent(q)}&season=${encodeURIComponent(selectedResultSeason)}`
+        );
+        const json = await res.json().catch(() => ({}));
+        setAthleteMatches(Array.isArray(json.matches) ? json.matches : []);
+      } catch {
+        setAthleteMatches([]);
+      }
+      setAthleteSearched(true);
+      setAthleteLoading(false);
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [athleteQuery, selectedResultSeason]);
 
   // ─── Save data to API helper (admin session required) ───
   const persistData = (newData) => {
@@ -1116,9 +1160,21 @@ export default function HomePage({ initialData, serverDate }) {
               {nextMeet.time && <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}><Clock size={16} style={{ color: "#F5A123" }} /> {nextMeet.time}</span>}
               {nextMeet.location && <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}><MapPin size={16} style={{ color: "#F5A123" }} /> {nextMeet.location.split(",")[0]}</span>}
             </div>
-            <a href="#schedule" onClick={(e) => { e.preventDefault(); scrollTo("schedule"); }} style={{ display: "inline-block", marginTop: "1.5rem", background: "#F5A123", color: "#1A1A1A", fontWeight: 700, textDecoration: "none", padding: "0.7rem 1.8rem", borderRadius: 999, fontSize: "0.9rem", letterSpacing: "0.02em" }}>
-              View Full Schedule
-            </a>
+            {weather && (() => {
+              const w = weatherInfo(weather.code);
+              return (
+                <div style={{ marginTop: "1.25rem", display: "inline-flex", alignItems: "center", gap: "0.6rem", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 999, padding: "0.45rem 1.1rem", color: "rgba(255,255,255,0.92)", fontWeight: 600, fontSize: "0.9rem", flexWrap: "wrap", justifyContent: "center" }}>
+                  <span style={{ fontSize: "1.15rem", lineHeight: 1 }} aria-hidden="true">{w.icon}</span>
+                  <span>Meet-day forecast: {w.label ? `${w.label}, ` : ""}{weather.high}°{weather.low != null ? ` / ${weather.low}°` : ""}</span>
+                  {weather.precip != null && <span style={{ color: "#F5A123" }}>· {weather.precip}% rain</span>}
+                </div>
+              );
+            })()}
+            <div>
+              <a href="#schedule" onClick={(e) => { e.preventDefault(); scrollTo("schedule"); }} style={{ display: "inline-block", marginTop: "1.5rem", background: "#F5A123", color: "#1A1A1A", fontWeight: 700, textDecoration: "none", padding: "0.7rem 1.8rem", borderRadius: 999, fontSize: "0.9rem", letterSpacing: "0.02em" }}>
+                View Full Schedule
+              </a>
+            </div>
           </div>
         </section>
       )}
@@ -1348,6 +1404,43 @@ export default function HomePage({ initialData, serverDate }) {
           <div className="section-subtitle" style={{ color: colors.orange }}>Past Performances</div>
           <h2 className="section-title">Meet Results & Standings</h2>
           <p className="section-desc">Check out past meet results and season standings. Results are posted after each meet.</p>
+
+          <div style={{ maxWidth: 560, margin: "0 auto 2rem" }}>
+            <div style={{ position: "relative" }}>
+              <input
+                value={athleteQuery}
+                onChange={(e) => setAthleteQuery(e.target.value)}
+                placeholder={`Search any athlete across the ${selectedResultSeason} season...`}
+                aria-label="Search an athlete across all meets"
+                style={{ width: "100%", padding: "0.85rem 1rem 0.85rem 2.6rem", borderRadius: 12, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.08)", color: "#fff", fontSize: "1rem", outline: "none" }}
+              />
+              <Trophy size={18} style={{ position: "absolute", left: "0.9rem", top: "50%", transform: "translateY(-50%)", color: colors.orange }} />
+            </div>
+
+            {athleteQuery.trim().length >= 2 && (
+              <div style={{ marginTop: "1rem", background: "#fff", borderRadius: 12, padding: "0.5rem", textAlign: "left", maxHeight: 360, overflowY: "auto" }}>
+                {athleteLoading ? (
+                  <p style={{ color: colors.medGray, padding: "1.25rem", textAlign: "center", margin: 0 }}>Searching every meet...</p>
+                ) : athleteMatches.length === 0 ? (
+                  athleteSearched ? <p style={{ color: colors.medGray, padding: "1.25rem", textAlign: "center", margin: 0 }}>No athletes found matching &quot;{athleteQuery.trim()}&quot; in {selectedResultSeason}.</p> : null
+                ) : (
+                  <>
+                    <div style={{ fontSize: "0.75rem", color: colors.medGray, padding: "0.5rem 0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>{athleteMatches.length} finish{athleteMatches.length !== 1 ? "es" : ""} found</div>
+                    {athleteMatches.map((m, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.6rem 0.75rem", borderTop: i ? "1px solid #f0f0f0" : "none" }}>
+                        <div style={{ minWidth: 40, textAlign: "center", fontWeight: 800, color: m.place === "1" ? "#B7791F" : colors.black, fontSize: "1.1rem" }}>{m.place ? `#${m.place}` : ""}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, color: colors.black }}>{highlightName(m.name, athleteQuery.trim().toLowerCase())}</div>
+                          <div style={{ fontSize: "0.8rem", color: colors.medGray }}>{m.event} · {m.meet}{m.age ? ` · Age ${m.age}` : ""}</div>
+                        </div>
+                        <div style={{ fontWeight: 800, color: colors.orangeDark, fontVariantNumeric: "tabular-nums" }}>{m.time}</div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
 
           <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
             {Array.from(new Set([String(new Date().getFullYear()), ...(data.results || []).map(resultYear)]))
