@@ -20,7 +20,19 @@ export async function GET(request) {
     if (!res.ok) {
       return NextResponse.json({ error: "Could not load the results sheet." }, { status: 502 });
     }
-    const events = parseEvents(parseCsv(await res.text()));
+    const text = await res.text();
+    // A sheet that is not published to the web returns Google's HTML page
+    // instead of CSV; tell the admin exactly what to fix.
+    if (/^\s*<(!doctype|html)/i.test(text)) {
+      return NextResponse.json(
+        {
+          error:
+            "This sheet is not published to the web yet. In Google Sheets: File > Share > Publish to web, then republish the link.",
+        },
+        { status: 422 }
+      );
+    }
+    const events = parseEvents(parseCsv(text));
     return NextResponse.json({ events });
   } catch (err) {
     console.error("Results fetch/parse error:", err);

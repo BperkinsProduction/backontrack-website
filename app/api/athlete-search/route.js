@@ -51,7 +51,9 @@ export async function GET(request) {
       try {
         const res = await fetch(toCsvUrl(r.downloadUrl), { cache: "no-store" });
         if (!res.ok) return;
-        const events = parseEvents(parseCsv(await res.text()));
+        const text = await res.text();
+        if (/^\s*<(!doctype|html)/i.test(text)) return; // not published to web
+        const events = parseEvents(parseCsv(text));
         for (const ev of events) {
           for (const en of ev.entries) {
             if (en.name.toLowerCase().includes(q)) {
