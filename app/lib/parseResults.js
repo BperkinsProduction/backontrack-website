@@ -123,10 +123,31 @@ export function parseEvents(rows) {
   return events;
 }
 
+// Accept the two Google Sheets link shapes admins actually paste:
+//   published to web:  https://docs.google.com/spreadsheets/d/e/<token>/pubhtml
+//   normal share link: https://docs.google.com/spreadsheets/d/<id>/edit?usp=sharing
+// Share links are read through the CSV export endpoint. Both shapes stay on
+// docs.google.com, so the SSRF guard is no wider than before.
+const PUBLISHED_RE = /^https:\/\/docs\.google\.com\/spreadsheets\/d\/e\/[\w-]+\/pub/;
+// {20,} so this cannot match the literal "e" segment of a /d/e/<token>/ URL.
+const SHARED_RE = /^https:\/\/docs\.google\.com\/spreadsheets\/d\/([\w-]{20,})(?:[/?#]|$)/;
+
 export function isPublishedSheet(url) {
-  return /^https:\/\/docs\.google\.com\/spreadsheets\/d\/e\/[\w-]+\/pub/.test(url || "");
+  const u = String(url || "");
+  return PUBLISHED_RE.test(u) || SHARED_RE.test(u);
 }
 
 export function toCsvUrl(url) {
-  return String(url).replace(/\/pub(html)?(\?.*)?$/, "/pub?output=csv");
+  const u = String(url);
+  if (PUBLISHED_RE.test(u)) {
+    return u.replace(/\/pub(html)?(\?.*)?$/, "/pub?output=csv");
+  }
+  const m = u.match(SHARED_RE);
+  if (!m) return u;
+  // Keep the tab the link points at, when it names one.
+  const gid = u.match(/[#?&]gid=(\d+)/);
+  return (
+    `https://docs.google.com/spreadsheets/d/${m[1]}/export?format=csv` +
+    (gid ? `&gid=${gid[1]}` : "")
+  );
 }
